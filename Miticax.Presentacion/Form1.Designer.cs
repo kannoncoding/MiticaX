@@ -1,38 +1,21 @@
-﻿namespace Miticax.Presentacion;
+﻿//UNED
+//Mitica X
+//Jorge Arias Melendez
+//Septiembre 2025
+//Formulario principal de la capa de presentacion
 
-partial class Form1
+using System;
+using System.Windows.Forms;
+
+namespace Miticax.Presentacion
 {
-    /// <summary>
-    ///  Required designer variable.
-    /// </summary>
-    private System.ComponentModel.IContainer components = null;
-
-    /// <summary>
-    ///  Clean up any resources being used.
-    /// </summary>
-    /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-    protected override void Dispose(bool disposing)
+    //Clase Form1 hereda de Form y representa la ventana principal
+    public partial class Form1 : Form
     {
-        if (disposing && (components != null))
+        //Constructor del formulario
+        public Form1()
         {
-            components.Dispose();
+            InitializeComponent(); // este metodo viene del Designer.cs
         }
-        base.Dispose(disposing);
     }
-
-    #region Windows Form Designer generated code
-
-    /// <summary>
-    ///  Required method for Designer support - do not modify
-    ///  the contents of this method with the code editor.
-    /// </summary>
-    private void InitializeComponent()
-    {
-        this.components = new System.ComponentModel.Container();
-        this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-        this.ClientSize = new System.Drawing.Size(800, 450);
-        this.Text = "Form1";
-    }
-
-    #endregion
 }
