@@ -1,19 +1,28 @@
+//UNED
+//Mitica X
+//Jorge Arias Melendez
+//Septiembre 2025
+//Formulario principal: codigo de usuario (constructor y eventos). No InitializeComponent aqui.
+
+using System;
+using System.Windows.Forms;
+
 namespace Miticax.Presentacion
 {
-    partial class Form1
+    // Parcial: esta parte contiene el constructor y la logica de eventos.
+    public partial class Form1 : Form
     {
-        private void InitializeComponent()
+        // Constructor del formulario: siempre debe estar en este archivo.
+        public Form1()
         {
-            this.SuspendLayout();
-            // 
-            // Form1
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Name = "Form1";
-            this.Text = "Form1";
-            this.ResumeLayout(false);
+            // Llama al metodo generado por el diseñador para crear y colocar controles.
+            InitializeComponent();
         }
+
+        // Ejemplo de manejador de eventos (agrega los tuyos aqui).
+        // private void btnAceptar_Click(object sender, EventArgs e)
+        // {
+        //     // logica de UI; no reglas de negocio aqui.
+        // }
     }
 }
