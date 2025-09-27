@@ -1,0 +1,25 @@
+## Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.ipch
+*.opendb
+*.VC.db
+*.vscode/
+TestResults/
+*.Cache
+*.pdb
+*.resharper
+.idea/
+
+## OS junk files
+Thumbs.db
+ehthumbs.db
+.DS_Store
+
+## Build results
+[Bb]uild/
+[Ll]og/
