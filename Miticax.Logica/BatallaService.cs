@@ -78,9 +78,20 @@ namespace Miticax.Logica
         {
             error = "";
 
-            // 1) Buscar batalla
+            // Guard: RNG requerido
+            if (rng == null)
+            {
+                error = "Random no puede ser null para ejecutar la batalla";
+                return ResultadoOperacion.Fail(error);
+            }
+
+            // 1- Buscar batalla
             var batalla = _batallaDatos.FindById(idBatalla);
-            if (batalla == null) { error = "Batalla no existe"; return ResultadoOperacion.Fail(error); }
+            if (batalla == null)
+            {
+                error = "Batalla no existe";
+                return ResultadoOperacion.Fail(error);
+            }
 
             // 2) No permitir re-ejecucion
             if (batalla.Ganador != 0)

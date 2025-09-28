@@ -45,6 +45,10 @@ namespace Miticax.Logica
             var batalla = _batallaDatos.FindById(ronda.IdBatalla);
             if (batalla == null) return ResultadoOperacion.Fail("La batalla indicada no existe (IdBatalla=" + ronda.IdBatalla + ")");
 
+            // 3.1- no se pueden registrar rondas si la batalla ya tiene ganador
+            if (batalla.Ganador != 0)
+                return ResultadoOperacion.Fail("La batalla ya finalizo; no se pueden registrar mas rondas (Ganador=" + batalla.Ganador + ")");
+
             // 4) Los jugadores de la ronda deben ser los de la batalla (en cualquier orden)
             bool parIgualDirecto = (ronda.IdJugador1 == batalla.IdJugador1 && ronda.IdJugador2 == batalla.IdJugador2);
             bool parIgualInvertido = (ronda.IdJugador1 == batalla.IdJugador2 && ronda.IdJugador2 == batalla.IdJugador1);
@@ -93,6 +97,10 @@ namespace Miticax.Logica
             // 3) La batalla debe existir
             var batalla = _batallaDatos.FindById(ronda.IdBatalla);
             if (batalla == null) return ResultadoOperacion.Fail("La batalla indicada no existe (IdBatalla=" + ronda.IdBatalla + ")");
+
+            // 3.1- no se pueden registrar rondas si la batalla ya tiene ganador
+            if (batalla.Ganador != 0)
+                return ResultadoOperacion.Fail("La batalla ya finalizo; no se pueden registrar mas rondas (Ganador=" + batalla.Ganador + ")");
 
             // 4) Los jugadores deben pertenecer a esa batalla
             bool parIgualDirecto = (ronda.IdJugador1 == batalla.IdJugador1 && ronda.IdJugador2 == batalla.IdJugador2);
