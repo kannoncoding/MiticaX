@@ -20,10 +20,63 @@ namespace Miticax.Presentacion
         internal static BatallaDatos BatallaDatos() => new BatallaDatos();
         internal static RondaDatos RondaDatos() => new RondaDatos();
 
+        // ---- Utilidades internas seguras ----
+
+        // Intenta obtener un entero desde una propiedad numerica (int, int?, short, long, etc.)
+        private static bool TryGetIntPropertyValue(object obj, string propertyName, out int value)
+        {
+            value = 0;
+            if (obj == null) return false;
+            var t = obj.GetType();
+            var p = t.GetProperty(propertyName);
+            if (p == null) return false;
+
+            var v = p.GetValue(obj);
+            if (v == null) return false;
+
+            try
+            {
+                // Usa Convert.ToInt32 para abarcar tipos numericos comunes y nullable
+                value = Convert.ToInt32(v);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static object CrearInstanciaServicio(Type t)
+        {
+            try
+            {
+                // Crea instancia sin parametros si el servicio no es static
+                return Activator.CreateInstance(t);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static object[] ArrayToObjectArray(object arrayObj)
+        {
+            // Convierte cualquier System.Array fuertemente tipado a object[]
+            if (arrayObj == null) return new object[0];
+            var arr = arrayObj as Array;
+            if (arr == null) return new object[0];
+
+            int n = arr.Length;
+            var res = new object[n];
+            for (int i = 0; i < n; i++)
+                res[i] = arr.GetValue(i);
+            return res;
+        }
+
         // ---- Filtros con arrays (sin LINQ ni listas) ----
         internal static T[] FiltrarPorCampoIgual<T>(T[] fuente, string nombreCampoInt, int valor)
         {
-            if (fuente == null) return null;
+            if (fuente == null) return new T[0];
 
             // contar
             int n = 0;
@@ -31,10 +84,8 @@ namespace Miticax.Presentacion
             {
                 var it = fuente[i];
                 if (it == null) continue;
-                var prop = it.GetType().GetProperty(nombreCampoInt);
-                if (prop == null) continue;
-                object v = prop.GetValue(it);
-                if (v is int iv && iv == valor) n++;
+                int iv;
+                if (TryGetIntPropertyValue(it, nombreCampoInt, out iv) && iv == valor) n++;
             }
 
             var res = new T[n];
@@ -43,10 +94,8 @@ namespace Miticax.Presentacion
             {
                 var it = fuente[i];
                 if (it == null) continue;
-                var prop = it.GetType().GetProperty(nombreCampoInt);
-                if (prop == null) continue;
-                object v = prop.GetValue(it);
-                if (v is int iv && iv == valor) res[j++] = it;
+                int iv;
+                if (TryGetIntPropertyValue(it, nombreCampoInt, out iv) && iv == valor) res[j++] = it;
             }
             return res;
         }
@@ -62,10 +111,9 @@ namespace Miticax.Presentacion
                 {
                     var it = arr[i];
                     if (it == null) continue;
-                    var p = it.GetType().GetProperty("IdBatalla");
-                    if (p == null) continue;
-                    int id = (int)p.GetValue(it);
-                    if (id > max) max = id;
+                    int id;
+                    if (TryGetIntPropertyValue(it, "IdBatalla", out id))
+                        if (id > max) max = id;
                 }
             }
             return max;
@@ -74,21 +122,34 @@ namespace Miticax.Presentacion
         internal static bool TryRegistrarBatalla(int j1, int e1, int j2, int e2, out string mensaje)
         {
             mensaje = "";
-            // Busco Miticax.Logica.BatallaService en tiempo de ejecucion
             var t = Type.GetType("Miticax.Logica.BatallaService, Miticax.Logica");
             if (t == null) { mensaje = "Servicio BatallaService no disponible."; return false; }
 
-            // Intento 1: RegistrarBatalla(int,int,int,int,out string)
+            // Intento 1: static RegistrarBatalla(int,int,int,int,out string)
             var m = t.GetMethod("RegistrarBatalla", new Type[] { typeof(int), typeof(int), typeof(int), typeof(int), typeof(string).MakeByRefType() });
             if (m != null)
             {
                 object[] pars = new object[] { j1, e1, j2, e2, null };
-                var ro = m.Invoke(null, pars); // asumo static en servicio
+                var ro = m.Invoke(null, pars);
                 mensaje = ExtraerMensaje(ro) ?? (pars[4] as string) ?? "";
                 return ExtraerExito(ro);
             }
 
-            // Intento 2: RegistrarBatalla(entidad, out string)
+            // Intento 1b: instancia RegistrarBatalla(int,int,int,int,out string)
+            var inst = CrearInstanciaServicio(t);
+            if (inst != null)
+            {
+                var mi = t.GetMethod("RegistrarBatalla", new Type[] { typeof(int), typeof(int), typeof(int), typeof(int), typeof(string).MakeByRefType() });
+                if (mi != null)
+                {
+                    object[] pars = new object[] { j1, e1, j2, e2, null };
+                    var ro = mi.Invoke(inst, pars);
+                    mensaje = ExtraerMensaje(ro) ?? (pars[4] as string) ?? "";
+                    return ExtraerExito(ro);
+                }
+            }
+
+            // Intento 2: RegistrarBatalla(BatallaEntidad, out string)
             var te = Type.GetType("Miticax.Entidades.BatallaEntidad, Miticax.Entidades");
             var me = t.GetMethod("RegistrarBatalla", new Type[] { te, typeof(string).MakeByRefType() });
             if (te != null && me != null)
@@ -100,7 +161,7 @@ namespace Miticax.Presentacion
                 te.GetProperty("IdEquipo2")?.SetValue(ent, e2);
 
                 object[] pars = new object[] { ent, null };
-                var ro = me.Invoke(null, pars);
+                var ro = me.Invoke(me.IsStatic ? null : (inst ?? CrearInstanciaServicio(t)), pars);
                 mensaje = ExtraerMensaje(ro) ?? (pars[1] as string) ?? "";
                 return ExtraerExito(ro);
             }
@@ -115,7 +176,7 @@ namespace Miticax.Presentacion
             var t = Type.GetType("Miticax.Logica.BatallaService, Miticax.Logica");
             if (t == null) { mensaje = "Servicio BatallaService no disponible."; return false; }
 
-            // Intento 1: EjecutarBatalla(int, out string)
+            // Intento 1: static EjecutarBatalla(int, out string)
             var m1 = t.GetMethod("EjecutarBatalla", new Type[] { typeof(int), typeof(string).MakeByRefType() });
             if (m1 != null)
             {
@@ -125,12 +186,36 @@ namespace Miticax.Presentacion
                 return ExtraerExito(ro);
             }
 
-            // Intento 2: EjecutarBatalla(int, Random, out string)
+            // Intento 1b: instancia EjecutarBatalla(int, out string)
+            var inst = CrearInstanciaServicio(t);
+            if (inst != null)
+            {
+                var mi = t.GetMethod("EjecutarBatalla", new Type[] { typeof(int), typeof(string).MakeByRefType() });
+                if (mi != null)
+                {
+                    object[] pars = new object[] { idBatalla, null };
+                    var ro = mi.Invoke(inst, pars);
+                    mensaje = ExtraerMensaje(ro) ?? (pars[1] as string) ?? "";
+                    return ExtraerExito(ro);
+                }
+            }
+
+            // Intento 2: static EjecutarBatalla(int, Random, out string)
             var m2 = t.GetMethod("EjecutarBatalla", new Type[] { typeof(int), typeof(Random), typeof(string).MakeByRefType() });
             if (m2 != null)
             {
                 object[] pars = new object[] { idBatalla, new Random(), null };
                 var ro = m2.Invoke(null, pars);
+                mensaje = ExtraerMensaje(ro) ?? (pars[2] as string) ?? "";
+                return ExtraerExito(ro);
+            }
+
+            // Intento 2b: instancia EjecutarBatalla(int, Random, out string)
+            var mi2 = t.GetMethod("EjecutarBatalla", new Type[] { typeof(int), typeof(Random), typeof(string).MakeByRefType() });
+            if (inst != null && mi2 != null)
+            {
+                object[] pars = new object[] { idBatalla, new Random(), null };
+                var ro = mi2.Invoke(inst, pars);
                 mensaje = ExtraerMensaje(ro) ?? (pars[2] as string) ?? "";
                 return ExtraerExito(ro);
             }
@@ -141,20 +226,29 @@ namespace Miticax.Presentacion
 
         internal static object[] TopRanking10()
         {
-            // Intenta RankingService.Top10() o alternativas comunes
             var t = Type.GetType("Miticax.Logica.RankingService, Miticax.Logica");
             if (t != null)
             {
+                // Probar metodos sin parametros primero
                 var m = t.GetMethod("Top10", Type.EmptyTypes)
-                        ?? t.GetMethod("Top100", Type.EmptyTypes)
-                        ?? t.GetMethod("Top", new Type[] { typeof(int) });
+                         ?? t.GetMethod("Top100", Type.EmptyTypes);
 
                 if (m != null)
                 {
-                    if (m.GetParameters().Length == 0)
-                        return (object[])m.Invoke(null, null);
+                    // static
+                    if (m.IsStatic) return ArrayToObjectArray(m.Invoke(null, null));
+                    // instancia
+                    var inst = CrearInstanciaServicio(t);
+                    return ArrayToObjectArray(m.Invoke(inst, null));
+                }
 
-                    return (object[])m.Invoke(null, new object[] { 10 });
+                // Probar Top(int)
+                var mTop = t.GetMethod("Top", new Type[] { typeof(int) });
+                if (mTop != null)
+                {
+                    if (mTop.IsStatic) return ArrayToObjectArray(mTop.Invoke(null, new object[] { 10 }));
+                    var inst = CrearInstanciaServicio(t);
+                    return ArrayToObjectArray(mTop.Invoke(inst, new object[] { 10 }));
                 }
             }
             return new object[0];
@@ -167,8 +261,12 @@ namespace Miticax.Presentacion
             var p = ro.GetType().GetProperty("Exito") ?? ro.GetType().GetProperty("Success");
             if (p == null) return false;
             var v = p.GetValue(ro);
-            return v is bool b && b;
+
+            if (v is bool) return (bool)v;
+            if (v is bool?) return ((bool?)v).GetValueOrDefault(false);
+            return false;
         }
+
 
         internal static string ExtraerMensaje(object ro)
         {
@@ -176,6 +274,7 @@ namespace Miticax.Presentacion
             var p = ro.GetType().GetProperty("Mensaje")
                  ?? ro.GetType().GetProperty("Message")
                  ?? ro.GetType().GetProperty("Detalle")
+                 ?? ro.GetType().GetProperty("Descripcion")
                  ?? ro.GetType().GetProperty("Error");
             if (p == null) return null;
             var v = p.GetValue(ro);
