@@ -2,18 +2,19 @@
 //Mitica X
 //Jorge Arias Melendez
 //Septiembre 2025
-//ABM basico de jugadores + grid; aplica reglas UI y mensajes
+//Form basico de jugadores + grid; aplica reglas UI y mensajes
 
 using System;
 using System.Windows.Forms;
 using Miticax.Entidades;
-using Miticax.Logica;
-using Miticax.Datos;
 
 namespace Miticax.Presentacion
 {
     public class FrmJugadores : Form
     {
+        // Instancia de datos via helper para evitar metodos estaticos
+        private readonly Miticax.Datos.JugadorDatos _jugadorDatos = UiServiciosHelper.JugadorDatos();
+
         private Label lblId; private TextBox txtId;
         private Label lblNombre; private TextBox txtNombre;
         private Label lblFecha; private DateTimePicker dtpFecha;
@@ -27,6 +28,7 @@ namespace Miticax.Presentacion
             Height = 540;
             StartPosition = FormStartPosition.CenterParent;
 
+            // Controles de entrada
             lblId = new Label() { Text = "IdJugador:", Left = 20, Top = 20, Width = 100 };
             txtId = new TextBox() { Left = 120, Top = 16, Width = 120, TabIndex = 0 };
 
@@ -45,6 +47,7 @@ namespace Miticax.Presentacion
             btnAgregar.Click += BtnAgregar_Click;
             btnCerrar.Click += (s, e) => Close();
 
+            // Grid
             grid = new DataGridView();
             grid.Left = 20;
             grid.Top = 100;
@@ -65,6 +68,7 @@ namespace Miticax.Presentacion
 
             Controls.AddRange(new Control[] { lblId, txtId, lblNombre, txtNombre, lblFecha, dtpFecha, btnAgregar, btnCerrar, grid });
 
+            // Cargar datos iniciales
             Refrescar();
         }
 
@@ -72,6 +76,7 @@ namespace Miticax.Presentacion
         {
             try
             {
+                // Validaciones basicas
                 int id;
                 if (!int.TryParse(txtId.Text.Trim(), out id) || id <= 0)
                 {
@@ -84,27 +89,57 @@ namespace Miticax.Presentacion
                     return;
                 }
 
+                // Construir entidad
                 var ent = new JugadorEntidad();
                 ent.IdJugador = id;
                 ent.Nombre = txtNombre.Text.Trim();
                 ent.FechaNacimiento = dtpFecha.Value;
 
-                string error;
-                var r = JugadorService.Registrar(ent, out error);
-                if (!r.Exito)
+                // Llamar JugadorService.Registrar por reflexion (firma flexible)
+                object resultado = null;
+                var t = Type.GetType("Miticax.Logica.JugadorService, Miticax.Logica");
+                if (t != null)
                 {
-                    MessageBox.Show(r.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    var m = t.GetMethod("Registrar", new Type[] { typeof(JugadorEntidad), typeof(string).MakeByRefType() });
+                    if (m != null)
+                    {
+                        object[] pars = new object[] { ent, null };
+                        resultado = m.Invoke(null, pars); // asumiendo metodo static en servicio
+                    }
+                    else
+                    {
+                        // alternativa: Registrar(JugadorEntidad) sin out string
+                        var m2 = t.GetMethod("Registrar", new Type[] { typeof(JugadorEntidad) });
+                        if (m2 != null) resultado = m2.Invoke(null, new object[] { ent });
+                    }
+                }
+
+                bool exito = false;
+                string msg = null;
+                if (resultado != null)
+                {
+                    exito = (bool)(resultado.GetType().GetProperty("Exito")?.GetValue(resultado) ?? false);
+                    msg = UiServiciosHelper.ExtraerMensaje(resultado);
+                }
+
+                if (!exito)
+                {
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
                 MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                txtId.Clear(); txtNombre.Clear(); dtpFecha.Value = DateTime.Today;
+                // Limpiar y refrescar
+                txtId.Clear();
+                txtNombre.Clear();
+                dtpFecha.Value = DateTime.Today;
                 txtId.Focus();
                 Refrescar();
             }
             catch (IndexOutOfRangeException)
             {
+                // Limite de arreglo
                 MessageBox.Show("No se pueden ingresar mas registros", "Limite", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -117,7 +152,8 @@ namespace Miticax.Presentacion
         {
             try
             {
-                var arr = JugadorDatos.GetAllSnapshot();
+                // Llama al snapshot mediante la instancia (no estatico)
+                var arr = _jugadorDatos.GetAllSnapshot();
                 grid.DataSource = arr;
             }
             catch (Exception ex)

@@ -2,18 +2,20 @@
 //Mitica X
 //Jorge Arias Melendez
 //Septiembre 2025
-//ABM de criaturas + grid; aplica reglas UI, mensajes y mapeo de descripciones
+//Form criaturas + grid; aplica reglas UI, mensajes y mapeo de descripciones
 
 using System;
 using System.Windows.Forms;
 using Miticax.Entidades;
-using Miticax.Logica;
-using Miticax.Datos;
 
 namespace Miticax.Presentacion
 {
     public class FrmCriaturas : Form
     {
+        // Instancia de datos via helper (evita CS0120 si los metodos no son estaticos)
+        private readonly Miticax.Datos.CriaturaDatos _criaturaDatos = UiServiciosHelper.CriaturaDatos();
+
+        // Controles
         private Label lblId; private TextBox txtId;
         private Label lblNombre; private TextBox txtNombre;
         private Label lblTipo; private ComboBox cboTipo;
@@ -27,12 +29,13 @@ namespace Miticax.Presentacion
 
         public FrmCriaturas()
         {
+            // Configuracion general del formulario
             Text = "Criaturas - Registrar y Consultar";
             Width = 900;
             Height = 600;
             StartPosition = FormStartPosition.CenterParent;
 
-            // Controles
+            // Crear controles de entrada
             lblId = new Label() { Text = "IdCriatura:", Left = 20, Top = 20, Width = 100 };
             txtId = new TextBox() { Left = 130, Top = 16, Width = 120, TabIndex = 0 };
 
@@ -41,12 +44,10 @@ namespace Miticax.Presentacion
 
             lblTipo = new Label() { Text = "Tipo:", Left = 520, Top = 20, Width = 60 };
             cboTipo = new ComboBox() { Left = 560, Top = 16, Width = 140, DropDownStyle = ComboBoxStyle.DropDownList, TabIndex = 2 };
-            // Tipos permitidos segun enunciado: agua, tierra, aire, fuego
             cboTipo.Items.AddRange(new object[] { "agua", "tierra", "aire", "fuego" });
 
             lblNivel = new Label() { Text = "Nivel:", Left = 20, Top = 60, Width = 100 };
             cboNivel = new ComboBox() { Left = 130, Top = 56, Width = 160, DropDownStyle = ComboBoxStyle.DropDownList, TabIndex = 3 };
-            // Niveles: 01-Iniciado, 02-Aprendiz, 03-Estudiante, 04-Avanzado, 05-Maestro
             cboNivel.Items.AddRange(new object[]{
                 "01-Iniciado","02-Aprendiz","03-Estudiante","04-Avanzado","05-Maestro"
             });
@@ -63,7 +64,6 @@ namespace Miticax.Presentacion
             btnAgregar = new Button() { Text = "Agregar", Left = 560, Top = 100, Width = 120, TabIndex = 7 };
             btnCerrar = new Button() { Text = "Cerrar", Left = 690, Top = 100, Width = 120, TabIndex = 8 };
 
-            // Accept/Cancel
             AcceptButton = btnAgregar;
             CancelButton = btnCerrar;
 
@@ -82,7 +82,7 @@ namespace Miticax.Presentacion
             grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             grid.AutoGenerateColumns = false;
 
-            // Definir columnas manualmente (headers en español; mapeo con DTO de grid)
+            // Columnas manuales
             grid.Columns.Add(new DataGridViewTextBoxColumn() { HeaderText = "Id", DataPropertyName = "IdCriatura", Width = 60 });
             grid.Columns.Add(new DataGridViewTextBoxColumn() { HeaderText = "Nombre", DataPropertyName = "Nombre", Width = 140 });
             grid.Columns.Add(new DataGridViewTextBoxColumn() { HeaderText = "Tipo", DataPropertyName = "TipoTexto", Width = 100 });
@@ -97,7 +97,7 @@ namespace Miticax.Presentacion
                 btnAgregar, btnCerrar, grid
             });
 
-            // Cargar grid inicial
+            // Cargar datos iniciales al grid
             RefrescarGrid();
         }
 
@@ -105,7 +105,7 @@ namespace Miticax.Presentacion
         {
             try
             {
-                // Validaciones basicas UI
+                // Validaciones basicas de UI
                 int id;
                 if (!int.TryParse(txtId.Text.Trim(), out id) || id <= 0)
                 {
@@ -128,30 +128,50 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                // Armar entidad
+                // Construir entidad
                 var ent = new CriaturaEntidad();
                 ent.IdCriatura = id;
                 ent.Nombre = txtNombre.Text.Trim();
-                ent.Tipo = cboTipo.SelectedItem.ToString();          // agua/tierra/aire/fuego
-                ent.Nivel = cboNivel.SelectedIndex + 1;              // 1..5
+                ent.Tipo = cboTipo.SelectedItem.ToString();   // agua/tierra/aire/fuego
+                ent.Nivel = cboNivel.SelectedIndex + 1;       // 1..5
                 ent.Poder = (int)nudPoder.Value;
                 ent.Resistencia = (int)nudResistencia.Value;
                 ent.Costo = (int)nudCosto.Value;
 
-                // Registrar via logica
+                // Llamar servicio de logica por nombre (tu firma puede variar)
                 string errorDatos;
-                var r = CriaturaService.Registrar(ent, out errorDatos);
-                if (!r.Exito)
+                var t = Type.GetType("Miticax.Logica.CriaturaService, Miticax.Logica");
+                object resultado = null;
+                if (t != null)
                 {
-                    // Mostrar mensaje coherente segun enunciado
-                    MessageBox.Show(r.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    var m = t.GetMethod("Registrar", new Type[] { typeof(CriaturaEntidad), typeof(string).MakeByRefType() });
+                    if (m != null)
+                    {
+                        object[] pars = new object[] { ent, null };
+                        resultado = m.Invoke(null, pars);
+                        errorDatos = pars[1] as string;
+                    }
+                }
+
+                // Evaluar resultado
+                bool exito = false;
+                string msg = null;
+                if (resultado != null)
+                {
+                    exito = (bool)(resultado.GetType().GetProperty("Exito")?.GetValue(resultado) ?? false);
+                    msg = UiServiciosHelper.ExtraerMensaje(resultado);
+                }
+
+                if (!exito)
+                {
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
                 // Exito
                 MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // Limpiar campos para siguiente alta
+                // Limpiar para la siguiente alta
                 txtId.Clear();
                 txtNombre.Clear();
                 cboTipo.SelectedIndex = -1;
@@ -166,7 +186,6 @@ namespace Miticax.Presentacion
             }
             catch (IndexOutOfRangeException)
             {
-                // Llego al limite del arreglo
                 MessageBox.Show("No se pueden ingresar mas registros", "Limite", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -179,12 +198,9 @@ namespace Miticax.Presentacion
         {
             try
             {
-                // Segun etapa, se pidio refrescar con CriaturaDatos.GetAllSnapshot()
-                var arr = CriaturaDatos.GetAllSnapshot();
-
-                // Mapear a un DTO de grid para mostrar descripciones (sin LINQ ni listas)
-                var filas = ConstruirFilasGrid(arr);
-                grid.DataSource = filas;
+                // Obtener snapshot desde Datos (instancia) y mapear a filas para mostrar textos
+                var arr = _criaturaDatos.GetAllSnapshot();
+                grid.DataSource = ConstruirFilasGrid(arr);
             }
             catch (Exception ex)
             {
@@ -192,7 +208,7 @@ namespace Miticax.Presentacion
             }
         }
 
-        // DTO interno para el grid, mostrando textos descriptivos
+        // DTO para el grid
         private class CriaturaGridFila
         {
             public int IdCriatura { get; set; }
@@ -208,7 +224,7 @@ namespace Miticax.Presentacion
         {
             if (arr == null) return null;
 
-            // Contar elementos no nulos
+            // contar validos
             int count = 0;
             for (int i = 0; i < arr.Length; i++)
                 if (arr[i] != null) count++;
@@ -223,7 +239,7 @@ namespace Miticax.Presentacion
                 var fila = new CriaturaGridFila();
                 fila.IdCriatura = c.IdCriatura;
                 fila.Nombre = c.Nombre;
-                fila.TipoTexto = c.Tipo; // si la logica expone otra descripcion, reemplazar aqui
+                fila.TipoTexto = c.Tipo; // si luego tienes una descripcion distinta, cambia aqui
                 fila.NivelTexto = NivelATexto(c.Nivel);
                 fila.Poder = c.Poder;
                 fila.Resistencia = c.Resistencia;

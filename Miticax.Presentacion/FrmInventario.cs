@@ -76,7 +76,7 @@ namespace Miticax.Presentacion
                 }
 
                 // Cargar criaturas (catalogo)
-                var criaturas = CriaturaDatos.GetAllSnapshot();
+                var criaturas = _criaturaDatos.GetAllSnapshot();
                 cboCriatura.Items.Clear();
                 for (int i = 0; i < criaturas.Length; i++)
                 {
