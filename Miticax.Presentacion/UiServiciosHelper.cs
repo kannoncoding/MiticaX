@@ -12,13 +12,24 @@ namespace Miticax.Presentacion
 {
     internal static class UiServiciosHelper
     {
-        // ---- Instancias basicas de Datos (no estaticos) ----
-        internal static JugadorDatos JugadorDatos() => new JugadorDatos();
-        internal static CriaturaDatos CriaturaDatos() => new CriaturaDatos();
-        internal static InventarioDatos InventarioDatos() => new InventarioDatos();
-        internal static EquipoDatos EquipoDatos() => new EquipoDatos();
-        internal static BatallaDatos BatallaDatos() => new BatallaDatos();
-        internal static RondaDatos RondaDatos() => new RondaDatos();
+        // ---- Singletons de Datos compartidos por toda la UI ----
+        // Se crean una sola vez por AppDomain y todos los formularios comparten
+        // los mismos arreglos en memoria.
+        private static readonly JugadorDatos _jugadorDatos = new JugadorDatos();
+        private static readonly CriaturaDatos _criaturaDatos = new CriaturaDatos();
+        private static readonly InventarioDatos _inventarioDatos = new InventarioDatos();
+        private static readonly EquipoDatos _equipoDatos = new EquipoDatos();
+        private static readonly BatallaDatos _batallaDatos = new BatallaDatos();
+        private static readonly RondaDatos _rondaDatos = new RondaDatos();
+
+        // Exponer las mismas funciones que ya usan los formularios,
+        // pero devolviendo SIEMPRE la instancia unica (no new).
+        internal static JugadorDatos JugadorDatos() => _jugadorDatos;
+        internal static CriaturaDatos CriaturaDatos() => _criaturaDatos;
+        internal static InventarioDatos InventarioDatos() => _inventarioDatos;
+        internal static EquipoDatos EquipoDatos() => _equipoDatos;
+        internal static BatallaDatos BatallaDatos() => _batallaDatos;
+        internal static RondaDatos RondaDatos() => _rondaDatos;
 
         // ---- Utilidades internas seguras ----
 
@@ -103,7 +114,7 @@ namespace Miticax.Presentacion
         // ---- Utilidades Batalla por reflexion para no romper compatibilidad ----
         internal static int UltimoIdBatalla()
         {
-            var arr = BatallaDatos().GetAllSnapshot();
+            var arr = BatallaDatos().GetAllSnapshot(); // usa singleton
             int max = 0;
             if (arr != null)
             {
@@ -266,7 +277,6 @@ namespace Miticax.Presentacion
             if (v is bool?) return ((bool?)v).GetValueOrDefault(false);
             return false;
         }
-
 
         internal static string ExtraerMensaje(object ro)
         {
