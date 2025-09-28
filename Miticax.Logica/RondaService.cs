@@ -23,6 +23,42 @@ namespace Miticax.Logica
             _jugadorDatos = jugadorDatos;
         }
 
+        // registra una ronda sin tocar cristales ni inventario
+        public ResultadoOperacion RegistrarRonda(RondaEntidad ronda, out string errorDatos)
+        {
+            errorDatos = "";
+            if (ronda.IdRonda < 1 || ronda.IdRonda > 3) return ResultadoOperacion.Fail("IdRonda debe ser 1, 2 o 3");
+            if (!Validaciones.IdPositivo(ronda.IdBatalla)) return ResultadoOperacion.Fail("IdBatalla no valido");
+
+            bool ok = _rondaDatos.Insert(ronda, out errorDatos);
+            if (!ok) return ResultadoOperacion.Fail(errorDatos);
+
+            return ResultadoOperacion.Ok();
+        }
+
+        // aplica solo recompensas por una ronda ya registrada
+        public void AplicarRecompensasRonda(RondaEntidad ronda, int poderGanadorIncremento)
+        {
+            // +10 cristales al ganador
+            var ganador = _jugadorDatos.FindById(ronda.GanadorRonda);
+            if (ganador != null) ganador.Cristales += 10;
+
+            // +poder a la criatura ganadora en inventario
+            int idJugadorGanador = ronda.GanadorRonda;
+            int idCriaturaGanadora = (ronda.GanadorRonda == ronda.IdJugador1) ? ronda.IdCriatura1 : ronda.IdCriatura2;
+
+            var snap = _inventarioDatos.GetAllSnapshot();
+            for (int i = 0; i < snap.Length; i++)
+            {
+                var item = snap[i];
+                if (item.IdJugador == idJugadorGanador && item.IdCriatura == idCriaturaGanadora)
+                {
+                    item.Poder += poderGanadorIncremento;
+                    break;
+                }
+            }
+        }
+
         // Registra una ronda y otorga +10 cristales al ganador y +5 poder a la criatura ganadora en inventario.
         public ResultadoOperacion RegistrarRondaYRecompensas(RondaEntidad ronda, int poderGanadorIncremento, out string errorDatos)
         {
