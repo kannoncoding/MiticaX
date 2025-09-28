@@ -6,14 +6,16 @@
 
 using System;
 using System.Windows.Forms;
-using Miticax.Datos;
-using Miticax.Logica;
-using Miticax.Entidades;
 
 namespace Miticax.Presentacion
 {
     public class FrmBatallas : Form
     {
+        // Instancias de Datos (evita CS0120 en metodos de instancia)
+        private readonly Miticax.Datos.JugadorDatos _jugadorDatos = UiServiciosHelper.JugadorDatos();
+        private readonly Miticax.Datos.EquipoDatos _equipoDatos = UiServiciosHelper.EquipoDatos();
+        private readonly Miticax.Datos.BatallaDatos _batallaDatos = UiServiciosHelper.BatallaDatos();
+
         private Label lblJ1; private ComboBox cboJ1;
         private Label lblE1; private ComboBox cboE1;
         private Label lblJ2; private ComboBox cboJ2;
@@ -82,7 +84,7 @@ namespace Miticax.Presentacion
         {
             try
             {
-                var jugadores = JugadorDatos.GetAllSnapshot();
+                var jugadores = _jugadorDatos.GetAllSnapshot();
                 combo.Items.Clear();
                 for (int i = 0; i < jugadores.Length; i++)
                 {
@@ -102,13 +104,23 @@ namespace Miticax.Presentacion
             {
                 comboEquipo.Items.Clear();
                 if (comboJugador.SelectedIndex < 0) return;
+
                 int idJugador = ParseLeadingInt(comboJugador.SelectedItem.ToString());
 
-                var equipos = EquipoDatos.GetByJugadorSnapshot(idJugador);
+                // Filtrar equipos por IdJugador (sin LINQ)
+                var equiposAll = _equipoDatos.GetAllSnapshot();
+                var equipos = UiServiciosHelper.FiltrarPorCampoIgual(equiposAll, "IdJugador", idJugador);
+
                 for (int i = 0; i < equipos.Length; i++)
                 {
                     if (equipos[i] == null) continue;
-                    comboEquipo.Items.Add(equipos[i].IdEquipo + " - Equipo");
+
+                    int idEquipo = 0;
+                    var t = equipos[i].GetType();
+                    var pId = t.GetProperty("IdEquipo");
+                    if (pId != null) idEquipo = (int)pId.GetValue(equipos[i]);
+
+                    comboEquipo.Items.Add(idEquipo + " - Equipo");
                 }
             }
             catch (Exception ex)
@@ -132,11 +144,12 @@ namespace Miticax.Presentacion
                 int j2 = ParseLeadingInt(cboJ2.SelectedItem.ToString());
                 int e2 = ParseLeadingInt(cboE2.SelectedItem.ToString());
 
-                string error;
-                var r = BatallaService.RegistrarBatalla(j1, e1, j2, e2, out error);
-                if (!r.Exito)
+                // Usar helper que ya contempla firmas distintas y extrae mensaje
+                string msg;
+                bool ok = UiServiciosHelper.TryRegistrarBatalla(j1, e1, j2, e2, out msg);
+                if (!ok)
                 {
-                    MessageBox.Show(r.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -157,13 +170,19 @@ namespace Miticax.Presentacion
         {
             try
             {
-                // Ejecuta la ultima batalla registrada o la seleccionada en grid (si implementaste seleccion)
-                int idBatalla = BatallaService.UltimaBatallaRegistradaId();
-                string error;
-                var r = BatallaService.EjecutarBatalla(idBatalla, out error);
-                if (!r.Exito)
+                // Ejecuta la ultima batalla registrada (puedes extender a seleccion desde grid si gustas)
+                int idBatalla = UiServiciosHelper.UltimoIdBatalla();
+                if (idBatalla <= 0)
                 {
-                    MessageBox.Show(r.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("No hay batallas registradas.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                string msg;
+                bool ok = UiServiciosHelper.TryEjecutarBatalla(idBatalla, out msg);
+                if (!ok)
+                {
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -188,7 +207,7 @@ namespace Miticax.Presentacion
         {
             try
             {
-                grid.DataSource = BatallaDatos.GetAllSnapshot();
+                grid.DataSource = _batallaDatos.GetAllSnapshot();
             }
             catch (Exception ex)
             {
