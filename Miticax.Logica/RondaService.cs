@@ -23,7 +23,7 @@ namespace Miticax.Logica
             _jugadorDatos = jugadorDatos;
         }
 
-        // Registra una ronda SIN tocar cristales ni inventario (persistencia atomica por fuera).
+        // registra una ronda SIN tocar cristales ni inventario
         public ResultadoOperacion RegistrarRonda(RondaEntidad ronda, out string errorDatos)
         {
             errorDatos = "";
@@ -32,6 +32,12 @@ namespace Miticax.Logica
             if (ronda.IdRonda < 1 || ronda.IdRonda > 3) return ResultadoOperacion.Fail("IdRonda debe ser 1, 2 o 3");
             if (!Validaciones.IdPositivo(ronda.IdBatalla)) return ResultadoOperacion.Fail("IdBatalla no valido");
 
+            // NUEVO: validar que el ganador pertenezca a la ronda (debe ser uno de los dos jugadores)
+            if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2)
+            {
+                return ResultadoOperacion.Fail("GanadorRonda invalido: debe coincidir con IdJugador1 o IdJugador2 de la ronda");
+            }
+
             // Intentar insertar la ronda
             bool ok = _rondaDatos.Insert(ronda, out errorDatos);
             if (!ok) return ResultadoOperacion.Fail(errorDatos);
@@ -39,9 +45,16 @@ namespace Miticax.Logica
             return ResultadoOperacion.Ok();
         }
 
-        // Aplica SOLAMENTE recompensas por una ronda ya registrada.
+        // aplica solo recompensas por una ronda ya registrada
         public void AplicarRecompensasRonda(RondaEntidad ronda, int poderGanadorIncremento)
         {
+            // NUEVO: verificacion defensiva (no otorgar recompensas si el ganador no pertenece a la ronda)
+            if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2)
+            {
+                // Datos inconsistentes: no hacer nada.
+                return;
+            }
+
             // +10 cristales al ganador de la ronda
             var ganador = _jugadorDatos.FindById(ronda.GanadorRonda);
             if (ganador != null)
@@ -50,6 +63,7 @@ namespace Miticax.Logica
             }
 
             // +poder a la criatura ganadora en inventario
+            // Si gano Jugador1, la criatura ganadora es IdCriatura1; si gano Jugador2, es IdCriatura2.
             int idJugadorGanador = ronda.GanadorRonda;
             int idCriaturaGanadora = (ronda.GanadorRonda == ronda.IdJugador1) ? ronda.IdCriatura1 : ronda.IdCriatura2;
 
