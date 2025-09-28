@@ -41,7 +41,6 @@ namespace Miticax.Logica
             for (int i = 0; i < snap.Length; i++)
             {
                 var item = snap[i];
-                if (item == null) break; // Asumimos snapshot recorta al count
                 if (item.IdJugador == idJugador && item.IdCriatura == idCriatura)
                 {
                     return ResultadoOperacion.Fail("El jugador ya posee esa criatura en su inventario");
@@ -54,9 +53,6 @@ namespace Miticax.Logica
                 return ResultadoOperacion.Fail("No posee la cantidad de cristales suficientes para obtener la criatura");
             }
 
-            // Descontar cristales
-            jugador.Cristales -= criatura.Costo;
-
             // Crear registro de inventario copiando poder/resistencia base de la criatura
             var inv = new InventarioJugadorEntidad
             {
@@ -66,12 +62,17 @@ namespace Miticax.Logica
                 Resistencia = criatura.Resistencia
             };
 
-            // Insertar
+            // Intentar insertar en inventario
             bool ok = _inventarioDatos.Insert(inv, out errorDatos);
             if (!ok) return ResultadoOperacion.Fail(errorDatos);
 
+            // Solo si el insert fue exitoso, se descuentan cristales
+            jugador.Cristales -= criatura.Costo;
+
             return ResultadoOperacion.Ok();
         }
+
+
 
         // Sube poder de una criatura del inventario del jugador en +5 (si existe).
         public void IncrementarPoderInventario(int idJugador, int idCriatura, int incremento)
