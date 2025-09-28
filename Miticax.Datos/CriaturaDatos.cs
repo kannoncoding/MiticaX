@@ -8,16 +8,16 @@ using Miticax.Entidades;
 
 namespace Miticax.Datos
 {
-    public static class CriaturaDatos
+    public class CriaturaDatos
     {
         // Arreglo de almacenamiento fijo para CriaturaEntidad.
-        private static readonly CriaturaEntidad[] _items = new CriaturaEntidad[ConstantesDatos.CapacidadCriaturas];
+        private readonly CriaturaEntidad[] _items = new CriaturaEntidad[ConstantesDatos.CapacidadCriaturas];
 
         // Contador de elementos realmente ocupados en el arreglo.
-        private static int _count = 0;
+        private int _count = 0;
 
         // Inserta una criatura si hay espacio. No valida reglas de negocio (eso es de la capa Logica).
-        public static bool Insert(CriaturaEntidad item, out string error)
+        public bool Insert(CriaturaEntidad item, out string error)
         {
             // Verifica espacio disponible comparando _count con la capacidad del arreglo.
             if (_count >= _items.Length)
@@ -35,7 +35,7 @@ namespace Miticax.Datos
         }
 
         // Busca linealmente por IdCriatura. Retorna null si no encuentra coincidencias.
-        public static CriaturaEntidad? FindById(int idCriatura)
+        public CriaturaEntidad? FindById(int idCriatura)
         {
             // Recorre solo hasta _count para evitar revisar posiciones vacias.
             for (int i = 0; i < _count; i++)
@@ -49,7 +49,7 @@ namespace Miticax.Datos
         }
 
         // Devuelve un clon superficial de los elementos ocupados (snapshot inmutable para el exterior).
-        public static CriaturaEntidad[] GetAllSnapshot()
+        public CriaturaEntidad[] GetAllSnapshot()
         {
             // Crea un nuevo arreglo del tamano exacto de lo almacenado.
             var copia = new CriaturaEntidad[_count];
@@ -62,7 +62,7 @@ namespace Miticax.Datos
         }
 
         // Helper: obtiene el indice dentro del arreglo por Id (o -1 si no existe).
-        public static int IndexOfById(int idCriatura)
+        public int IndexOfById(int idCriatura)
         {
             for (int i = 0; i < _count; i++)
             {
@@ -75,7 +75,7 @@ namespace Miticax.Datos
         }
 
         // Expone solo lectura del conteo actual.
-        public static int Count()
+        public int Count()
         {
             return _count;
         }

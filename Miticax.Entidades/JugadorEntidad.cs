@@ -2,7 +2,7 @@
 //Mitica X
 //Jorge Arias Melendez
 //Septiembre 2025
-//Entidad que representa un jugador del sistema (POCO; solo propiedades).
+//Entidad de jugador (POCO; solo propiedades)
 
 using System;
 
@@ -10,16 +10,22 @@ namespace Miticax.Entidades
 {
     public class JugadorEntidad
     {
+        // Identificador positivo
         public int IdJugador { get; set; }
 
-        public string Nombre { get; set; } = string.Empty;
+        // Nombre obligatorio
+        public string Nombre { get; set; } = "";
 
+        // Fecha de nacimiento para validar >10 anios
         public DateTime FechaNacimiento { get; set; }
 
-        public int NivelJugador { get; set; }
+        // Moneda del juego
+        public int Cristales { get; set; }
 
-        public int Cristales { get; set; } = 100;
+        // Estadistica acumulada
+        public int BatallasGanadas { get; set; }
 
-        public int BatallasGanadas { get; set; } = 0;
+        // Nivel del jugador (1 Novato, 2 Estudiante, 3 Maestro, 4 Supremo)
+        public int Nivel { get; set; }
     }
 }

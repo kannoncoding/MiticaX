@@ -8,13 +8,13 @@ using Miticax.Entidades;
 
 namespace Miticax.Datos
 {
-    public static class JugadorDatos
+    public class JugadorDatos
     {
-        private static readonly JugadorEntidad[] _items = new JugadorEntidad[ConstantesDatos.CapacidadJugadores];
-        private static int _count = 0;
+        private readonly JugadorEntidad[] _items = new JugadorEntidad[ConstantesDatos.CapacidadJugadores];
+        private int _count = 0;
 
         // Inserta un jugador si hay espacio.
-        public static bool Insert(JugadorEntidad item, out string error)
+        public bool Insert(JugadorEntidad item, out string error)
         {
             if (_count >= _items.Length)
             {
@@ -30,7 +30,7 @@ namespace Miticax.Datos
         }
 
         // Busca por IdJugador.
-        public static JugadorEntidad? FindById(int idJugador)
+        public JugadorEntidad? FindById(int idJugador)
         {
             for (int i = 0; i < _count; i++)
             {
@@ -43,7 +43,7 @@ namespace Miticax.Datos
         }
 
         // Snapshot de todos los jugadores almacenados.
-        public static JugadorEntidad[] GetAllSnapshot()
+        public JugadorEntidad[] GetAllSnapshot()
         {
             var copia = new JugadorEntidad[_count];
             for (int i = 0; i < _count; i++)
@@ -54,7 +54,7 @@ namespace Miticax.Datos
         }
 
         // Helper: indice por Id.
-        public static int IndexOfById(int idJugador)
+        public int IndexOfById(int idJugador)
         {
             for (int i = 0; i < _count; i++)
             {
@@ -66,7 +66,7 @@ namespace Miticax.Datos
             return -1;
         }
 
-        public static int Count()
+        public int Count()
         {
             return _count;
         }

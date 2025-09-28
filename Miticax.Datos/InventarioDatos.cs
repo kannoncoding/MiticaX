@@ -8,22 +8,22 @@ using Miticax.Entidades;
 
 namespace Miticax.Datos
 {
-    public static class InventarioDatos
+    public class InventarioDatos
     {
         // Matriz 2D fija: filas = jugadores, columnas = slots de inventario por jugador.
         // Solo se usan indices [fila, 0..countPorFila[fila)-1].
-        private static readonly InventarioJugadorEntidad[,] _items =
+        private readonly InventarioJugadorEntidad[,] _items =
             new InventarioJugadorEntidad[ConstantesDatos.CapacidadJugadores, ConstantesDatos.CapacidadInventarioPorJugador];
 
         // Mapeo interno: para cada fila (0..CapacidadJugadores-1) guardamos el IdJugador asignado a esa fila.
         // Valor -1 significa "fila libre/no asignada".
-        private static readonly int[] _jugadorIdPorFila = InicializarJugadorIdPorFila();
+        private readonly int[] _jugadorIdPorFila = InicializarJugadorIdPorFila();
 
         // Conteo de usados por fila (cantidad efectiva de items en cada jugador).
-        private static readonly int[] _countPorFila = new int[ConstantesDatos.CapacidadJugadores];
+        private readonly int[] _countPorFila = new int[ConstantesDatos.CapacidadJugadores];
 
         // Conteo total de filas asignadas hasta ahora (jugadores que ya tienen fila en inventario).
-        private static int _filasUsadas = 0;
+        private int _filasUsadas = 0;
 
         // Inicializador de arreglo de ids con -1.
         private static int[] InicializarJugadorIdPorFila()
@@ -38,7 +38,7 @@ namespace Miticax.Datos
 
         // Obtiene (o crea) la fila asignada a un IdJugador.
         // Si no existe, asigna la siguiente fila libre, si hay espacio.
-        private static int ObtenerOFijarFilaParaJugador(int idJugador, out string error)
+        private int ObtenerOFijarFilaParaJugador(int idJugador, out string error)
         {
             // 1) Buscar si ya existe una fila con ese idJugador.
             for (int f = 0; f < _jugadorIdPorFila.Length; f++)
@@ -67,7 +67,7 @@ namespace Miticax.Datos
         }
 
         // Inserta una fila de inventario (por jugador), respetando 30 por jugador.
-        public static bool Insert(InventarioJugadorEntidad item, out string error)
+        public bool Insert(InventarioJugadorEntidad item, out string error)
         {
             // Obtiene o crea la fila para el jugador del item.
             int fila = ObtenerOFijarFilaParaJugador(item.IdJugador, out error);
@@ -94,7 +94,7 @@ namespace Miticax.Datos
         }
 
         // Busca un registro de inventario por IdJugador + IdCriatura dentro de la fila del jugador.
-        public static InventarioJugadorEntidad? FindByJugadorAndCriatura(int idJugador, int idCriatura)
+        public InventarioJugadorEntidad? FindByJugadorAndCriatura(int idJugador, int idCriatura)
         {
             // Encontrar fila asignada a este jugador.
             int fila = -1;
@@ -122,7 +122,7 @@ namespace Miticax.Datos
         }
 
         // Retorna todos los registros del inventario (snapshot plano) de todos los jugadores.
-        public static InventarioJugadorEntidad[] GetAllSnapshot()
+        public InventarioJugadorEntidad[] GetAllSnapshot()
         {
             // 1) Calcular total de elementos usados para dimensionar el arreglo plano.
             int total = 0;
@@ -147,7 +147,7 @@ namespace Miticax.Datos
         }
 
         // Helper: obtiene todos los items de un jugador como arreglo ajustado.
-        public static InventarioJugadorEntidad[] FindAllByJugadorId(int idJugador)
+        public InventarioJugadorEntidad[] FindAllByJugadorId(int idJugador)
         {
             // Localizar fila
             int fila = -1;
@@ -171,13 +171,13 @@ namespace Miticax.Datos
         }
 
         // Helper: existe ya esa criatura en el inventario del jugador.
-        public static bool ExisteJugadorCriatura(int idJugador, int idCriatura)
+        public bool ExisteJugadorCriatura(int idJugador, int idCriatura)
         {
             return FindByJugadorAndCriatura(idJugador, idCriatura) != null;
         }
 
         // Conteo total de items en todos los jugadores.
-        public static int CountTotal()
+        public int CountTotal()
         {
             int total = 0;
             for (int f = 0; f < _filasUsadas; f++)
@@ -188,7 +188,7 @@ namespace Miticax.Datos
         }
 
         // Conteo de items para un jugador especifico (0 si aun no tiene fila).
-        public static int CountPorJugador(int idJugador)
+        public int CountPorJugador(int idJugador)
         {
             for (int f = 0; f < _jugadorIdPorFila.Length; f++)
             {

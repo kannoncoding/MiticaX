@@ -8,16 +8,16 @@ using Miticax.Entidades;
 
 namespace Miticax.Datos
 {
-    public static class RondaDatos
+    public class RondaDatos
     {
         // Ahora el arreglo soporta CapacidadBatallas * MaxRondasPorBatalla (best-of-3).
-        private static readonly RondaEntidad[] _items = new RondaEntidad[ConstantesDatos.CapacidadRondas];
+        private readonly RondaEntidad[] _items = new RondaEntidad[ConstantesDatos.CapacidadRondas];
 
         // Contador real de rondas usadas.
-        private static int _count = 0;
+        private int _count = 0;
 
         // Inserta una ronda si hay espacio total suficiente.
-        public static bool Insert(RondaEntidad item, out string error)
+        public bool Insert(RondaEntidad item, out string error)
         {
             if (_count >= _items.Length)
             {
@@ -33,7 +33,7 @@ namespace Miticax.Datos
         }
 
         // Busca una ronda por clave logica: IdBatalla + IdRonda.
-        public static RondaEntidad? FindByBatallaAndRonda(int idBatalla, int idRonda)
+        public RondaEntidad? FindByBatallaAndRonda(int idBatalla, int idRonda)
         {
             for (int i = 0; i < _count; i++)
             {
@@ -47,7 +47,7 @@ namespace Miticax.Datos
         }
 
         // Snapshot de todas las rondas almacenadas.
-        public static RondaEntidad[] GetAllSnapshot()
+        public RondaEntidad[] GetAllSnapshot()
         {
             var copia = new RondaEntidad[_count];
             for (int i = 0; i < _count; i++)
@@ -58,7 +58,7 @@ namespace Miticax.Datos
         }
 
         // Helper: rondas por batalla.
-        public static RondaEntidad[] FindAllByBatallaId(int idBatalla)
+        public RondaEntidad[] FindAllByBatallaId(int idBatalla)
         {
             int coincidencias = 0;
             for (int i = 0; i < _count; i++)
@@ -85,7 +85,7 @@ namespace Miticax.Datos
         }
 
         // Helper: rondas donde participa un jugador (como jugador1 o jugador2).
-        public static RondaEntidad[] FindAllByJugadorId(int idJugador)
+        public RondaEntidad[] FindAllByJugadorId(int idJugador)
         {
             int coincidencias = 0;
             for (int i = 0; i < _count; i++)
@@ -111,7 +111,7 @@ namespace Miticax.Datos
             return resultado;
         }
 
-        public static int Count()
+        public int Count()
         {
             return _count;
         }

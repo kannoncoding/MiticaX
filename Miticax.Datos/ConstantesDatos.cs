@@ -7,7 +7,7 @@
 namespace Miticax.Datos
 {
     // Clase estatica para centralizar capacidades y relaciones de tamano entre arreglos.
-    public static class ConstantesDatos
+    public class ConstantesDatos
     {
         // Catalogo de criaturas (20).
         public const int CapacidadCriaturas = 20;

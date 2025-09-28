@@ -9,13 +9,13 @@ using Miticax.Entidades;
 
 namespace Miticax.Datos
 {
-    public static class BatallaDatos
+    public class BatallaDatos
     {
         private static readonly BatallaEntidad[] _items = new BatallaEntidad[ConstantesDatos.CapacidadBatallas];
         private static int _count = 0;
 
         // Inserta una batalla si hay espacio (los checks de consistencia van en Logica).
-        public static bool Insert(BatallaEntidad item, out string error)
+        public bool Insert(BatallaEntidad item, out string error)
         {
             if (_count >= _items.Length)
             {
@@ -31,7 +31,7 @@ namespace Miticax.Datos
         }
 
         // Busca por IdBatalla.
-        public static BatallaEntidad? FindById(int idBatalla)
+        public BatallaEntidad? FindById(int idBatalla)
         {
             for (int i = 0; i < _count; i++)
             {
@@ -44,7 +44,7 @@ namespace Miticax.Datos
         }
 
         // Snapshot de todas las batallas.
-        public static BatallaEntidad[] GetAllSnapshot()
+        public BatallaEntidad[] GetAllSnapshot()
         {
             var copia = new BatallaEntidad[_count];
             for (int i = 0; i < _count; i++)
@@ -55,7 +55,7 @@ namespace Miticax.Datos
         }
 
         // Helper: batallas donde participa un jugador (como jugador1 o jugador2).
-        public static BatallaEntidad[] FindAllByJugadorId(int idJugador)
+        public BatallaEntidad[] FindAllByJugadorId(int idJugador)
         {
             int coincidencias = 0;
             for (int i = 0; i < _count; i++)
@@ -82,7 +82,7 @@ namespace Miticax.Datos
         }
 
         // Helper: batallas por fecha exacta (si lo necesitas en UI/Logica).
-        public static BatallaEntidad[] FindAllByFecha(DateTime fecha)
+        public BatallaEntidad[] FindAllByFecha(DateTime fecha)
         {
             int coincidencias = 0;
             for (int i = 0; i < _count; i++)
@@ -108,7 +108,7 @@ namespace Miticax.Datos
             return resultado;
         }
 
-        public static int Count()
+        public int Count()
         {
             return _count;
         }

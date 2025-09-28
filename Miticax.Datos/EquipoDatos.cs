@@ -8,13 +8,13 @@ using Miticax.Entidades;
 
 namespace Miticax.Datos
 {
-    public static class EquipoDatos
+    public class EquipoDatos
     {
-        private static readonly EquipoEntidad[] _items = new EquipoEntidad[ConstantesDatos.CapacidadEquipos];
-        private static int _count = 0;
+        private readonly EquipoEntidad[] _items = new EquipoEntidad[ConstantesDatos.CapacidadEquipos];
+        private int _count = 0;
 
         // Inserta un equipo si hay espacio.
-        public static bool Insert(EquipoEntidad item, out string error)
+        public bool Insert(EquipoEntidad item, out string error)
         {
             if (_count >= _items.Length)
             {
@@ -30,7 +30,7 @@ namespace Miticax.Datos
         }
 
         // Busca por IdEquipo.
-        public static EquipoEntidad? FindById(int idEquipo)
+        public EquipoEntidad? FindById(int idEquipo)
         {
             for (int i = 0; i < _count; i++)
             {
@@ -43,7 +43,7 @@ namespace Miticax.Datos
         }
 
         // Snapshot de todos los equipos.
-        public static EquipoEntidad[] GetAllSnapshot()
+        public EquipoEntidad[] GetAllSnapshot()
         {
             var copia = new EquipoEntidad[_count];
             for (int i = 0; i < _count; i++)
@@ -54,7 +54,7 @@ namespace Miticax.Datos
         }
 
         // Helper: equipos de un jugador.
-        public static EquipoEntidad[] FindAllByJugadorId(int idJugador)
+        public EquipoEntidad[] FindAllByJugadorId(int idJugador)
         {
             int coincidencias = 0;
             for (int i = 0; i < _count; i++)
@@ -80,7 +80,7 @@ namespace Miticax.Datos
             return resultado;
         }
 
-        public static int IndexOfById(int idEquipo)
+        public int IndexOfById(int idEquipo)
         {
             for (int i = 0; i < _count; i++)
             {
@@ -92,7 +92,7 @@ namespace Miticax.Datos
             return -1;
         }
 
-        public static int Count()
+        public int Count()
         {
             return _count;
         }
