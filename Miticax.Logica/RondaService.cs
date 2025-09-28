@@ -129,45 +129,70 @@ namespace Miticax.Logica
             var batalla = _batallaDatos.FindById(ronda.IdBatalla);
             if (batalla == null) return ResultadoOperacion.Fail("La batalla indicada no existe (IdBatalla=" + ronda.IdBatalla + ")");
 
-            // 3.1- no se pueden registrar rondas si la batalla ya tiene ganador
+            // 3.1) No permitir rondas si la batalla ya finalizo
             if (batalla.Ganador != 0)
                 return ResultadoOperacion.Fail("La batalla ya finalizo; no se pueden registrar mas rondas (Ganador=" + batalla.Ganador + ")");
 
-            // 4) Los jugadores deben pertenecer a esa batalla
+            // 4) Los jugadores de la ronda deben ser los de la batalla (cualquier orden)
             bool parIgualDirecto = (ronda.IdJugador1 == batalla.IdJugador1 && ronda.IdJugador2 == batalla.IdJugador2);
             bool parIgualInvertido = (ronda.IdJugador1 == batalla.IdJugador2 && ronda.IdJugador2 == batalla.IdJugador1);
             if (!parIgualDirecto && !parIgualInvertido)
                 return ResultadoOperacion.Fail("Los jugadores de la ronda no pertenecen a la batalla especificada");
 
-            // 5) Verificar existencia de jugadores (defensivo)
+            // 5) Existencia de jugadores (defensivo)
             var j1 = _jugadorDatos.FindById(ronda.IdJugador1);
             if (j1 == null) return ResultadoOperacion.Fail("IdJugador1 no existe (Id=" + ronda.IdJugador1 + ")");
             var j2 = _jugadorDatos.FindById(ronda.IdJugador2);
             if (j2 == null) return ResultadoOperacion.Fail("IdJugador2 no existe (Id=" + ronda.IdJugador2 + ")");
 
-            // 6) NUEVO: verificar propiedad de criaturas en inventario
+            // 6) Cargar equipos de la batalla
+            var equipo1 = _equipoDatos.FindById(batalla.IdEquipo1);
+            var equipo2 = _equipoDatos.FindById(batalla.IdEquipo2);
+            if (equipo1 == null || equipo2 == null) return ResultadoOperacion.Fail("Equipos de la batalla no existen");
+
+            // 7) Mapear equipo correspondiente a cada jugador de la ronda
+            EquipoEntidad equipoDeJ1EnRonda;
+            EquipoEntidad equipoDeJ2EnRonda;
+            if (parIgualDirecto)
+            {
+                equipoDeJ1EnRonda = equipo1; // J1 -> Equipo1
+                equipoDeJ2EnRonda = equipo2; // J2 -> Equipo2
+            }
+            else
+            {
+                equipoDeJ1EnRonda = equipo2; // J1 -> Equipo2
+                equipoDeJ2EnRonda = equipo1; // J2 -> Equipo1
+            }
+
+            // 8) Enforzar roster: las criaturas declaradas deben estar en esos equipos
+            if (!EsCriaturaDelEquipo(equipoDeJ1EnRonda, ronda.IdCriatura1))
+                return ResultadoOperacion.Fail("IdCriatura1 no pertenece al roster del jugador1 para esta batalla");
+            if (!EsCriaturaDelEquipo(equipoDeJ2EnRonda, ronda.IdCriatura2))
+                return ResultadoOperacion.Fail("IdCriatura2 no pertenece al roster del jugador2 para esta batalla");
+
+            // 9) Verificar propiedad en inventario (evita criaturas “fantasma”)
             if (!PerteneceAlJugadorEnInventario(ronda.IdJugador1, ronda.IdCriatura1))
                 return ResultadoOperacion.Fail("IdCriatura1 no pertenece al IdJugador1 en el inventario");
             if (!PerteneceAlJugadorEnInventario(ronda.IdJugador2, ronda.IdCriatura2))
                 return ResultadoOperacion.Fail("IdCriatura2 no pertenece al IdJugador2 en el inventario");
 
-            // 7) Evitar duplicado (IdBatalla, IdRonda)
+            // 10) Evitar duplicado (IdBatalla, IdRonda)
             var existente = _rondaDatos.FindByBatallaAndRonda(ronda.IdBatalla, ronda.IdRonda);
             if (existente != null)
                 return ResultadoOperacion.Fail("Ya existe la ronda " + ronda.IdRonda + " para la batalla " + ronda.IdBatalla);
 
-            // 8) Insertar ronda
+            // 11) Insertar ronda
             bool ok = _rondaDatos.Insert(ronda, out errorDatos);
             if (!ok) return ResultadoOperacion.Fail(errorDatos);
 
-            // 9) Recompensas por ronda (con datos verificados)
+            // 12) Recompensas por ronda
             var ganador = _jugadorDatos.FindById(ronda.GanadorRonda);
             if (ganador != null) ganador.Cristales += 10;
 
             int idJugadorGanador = ronda.GanadorRonda;
             int idCriaturaGanadora = (ronda.GanadorRonda == ronda.IdJugador1) ? ronda.IdCriatura1 : ronda.IdCriatura2;
 
-            var snap = _inventarioDatos.GetAllSnapshot(); // snapshot exacto (sin nulos)
+            var snap = _inventarioDatos.GetAllSnapshot();
             for (int i = 0; i < snap.Length; i++)
             {
                 var item = snap[i];
