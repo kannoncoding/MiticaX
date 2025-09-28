@@ -2,7 +2,7 @@
 //Mitica X
 //Jorge Arias Melendez
 //Septiembre 2025
-//Resolver rondas, registrar sin recompensas, aplicar recompensas y utilidades transaccionales
+//Resolver rondas, registrar con validaciones fuertes (batalla, jugadores, inventario), recompensas y utilidades transaccionales
 
 using System;
 using Miticax.Entidades;
@@ -15,79 +15,116 @@ namespace Miticax.Logica
         private readonly RondaDatos _rondaDatos;
         private readonly InventarioDatos _inventarioDatos;
         private readonly JugadorDatos _jugadorDatos;
-        private readonly BatallaDatos _batallaDatos; //para validar existencia/participantes de la batalla
+        private readonly BatallaDatos _batallaDatos; // validar existencia/participantes de la batalla
 
+        // Constructor (asegurar inyectar BatallaDatos al crear el servicio)
         public RondaService(RondaDatos rondaDatos, InventarioDatos inventarioDatos, JugadorDatos jugadorDatos, BatallaDatos batallaDatos)
         {
             _rondaDatos = rondaDatos;
             _inventarioDatos = inventarioDatos;
             _jugadorDatos = jugadorDatos;
-            _batallaDatos = batallaDatos; // guardar referencia para validaciones
+            _batallaDatos = batallaDatos;
         }
 
-        // registra una ronda SIN tocar cristales ni inventario
+        // -------------------------------------------------------------
+        // RegistrarRonda: valida batalla, jugadores, inventario y unicidad
+        // -------------------------------------------------------------
         public ResultadoOperacion RegistrarRonda(RondaEntidad ronda, out string errorDatos)
         {
             errorDatos = "";
 
-            // Validaciones minimas
+            // 1) Validaciones basicas
             if (ronda.IdRonda < 1 || ronda.IdRonda > 3) return ResultadoOperacion.Fail("IdRonda debe ser 1, 2 o 3");
             if (!Validaciones.IdPositivo(ronda.IdBatalla)) return ResultadoOperacion.Fail("IdBatalla no valido");
 
-            // Ganador debe pertenecer a la ronda
+            // 2) Ganador debe pertenecer a la ronda
             if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2)
                 return ResultadoOperacion.Fail("GanadorRonda invalido: debe coincidir con IdJugador1 o IdJugador2");
 
-            // validar que la batalla exista
+            // 3) La batalla debe existir
             var batalla = _batallaDatos.FindById(ronda.IdBatalla);
             if (batalla == null) return ResultadoOperacion.Fail("La batalla indicada no existe (IdBatalla=" + ronda.IdBatalla + ")");
 
-            // validar que los jugadores de la ronda pertenecen a la batalla (en cualquier orden)
+            // 4) Los jugadores de la ronda deben ser los de la batalla (en cualquier orden)
             bool parIgualDirecto = (ronda.IdJugador1 == batalla.IdJugador1 && ronda.IdJugador2 == batalla.IdJugador2);
             bool parIgualInvertido = (ronda.IdJugador1 == batalla.IdJugador2 && ronda.IdJugador2 == batalla.IdJugador1);
             if (!parIgualDirecto && !parIgualInvertido)
                 return ResultadoOperacion.Fail("Los jugadores de la ronda no pertenecen a la batalla especificada");
 
-
-
-            // verificar existencia de participantes
+            // 5) Verificar existencia de jugadores (defensivo)
             var j1 = _jugadorDatos.FindById(ronda.IdJugador1);
             if (j1 == null) return ResultadoOperacion.Fail("IdJugador1 no existe (Id=" + ronda.IdJugador1 + ")");
-
             var j2 = _jugadorDatos.FindById(ronda.IdJugador2);
             if (j2 == null) return ResultadoOperacion.Fail("IdJugador2 no existe (Id=" + ronda.IdJugador2 + ")");
 
-            // Unicidad (IdBatalla, IdRonda)
+            // 6) NUEVO: verificar que cada criatura pertenezca al jugador declarado
+            if (!PerteneceAlJugadorEnInventario(ronda.IdJugador1, ronda.IdCriatura1))
+                return ResultadoOperacion.Fail("IdCriatura1 no pertenece al IdJugador1 en el inventario");
+            if (!PerteneceAlJugadorEnInventario(ronda.IdJugador2, ronda.IdCriatura2))
+                return ResultadoOperacion.Fail("IdCriatura2 no pertenece al IdJugador2 en el inventario");
+
+            // 7) Evitar duplicado (IdBatalla, IdRonda)
             var existente = _rondaDatos.FindByBatallaAndRonda(ronda.IdBatalla, ronda.IdRonda);
             if (existente != null)
-                return ResultadoOperacion.Fail("Ya existe una ronda " + ronda.IdRonda + " para la batalla " + ronda.IdBatalla);
+                return ResultadoOperacion.Fail("Ya existe la ronda " + ronda.IdRonda + " para la batalla " + ronda.IdBatalla);
 
-            // Insertar
+            // 8) Insertar
             bool ok = _rondaDatos.Insert(ronda, out errorDatos);
             if (!ok) return ResultadoOperacion.Fail(errorDatos);
 
             return ResultadoOperacion.Ok();
         }
 
-        // aplica solo recompensas por una ronda ya registrada
-        public void AplicarRecompensasRonda(RondaEntidad ronda, int poderGanadorIncremento)
+        // ---------------------------------------------------------------------
+        // RegistrarRondaYRecompensas: mismas validaciones + otorgar recompensas
+        // ---------------------------------------------------------------------
+        public ResultadoOperacion RegistrarRondaYRecompensas(RondaEntidad ronda, int poderGanadorIncremento, out string errorDatos)
         {
-            // NUEVO: verificacion defensiva (no otorgar recompensas si el ganador no pertenece a la ronda)
+            errorDatos = "";
+
+            // 1) Basicas
+            if (ronda.IdRonda < 1 || ronda.IdRonda > 3) return ResultadoOperacion.Fail("IdRonda debe ser 1, 2 o 3");
+            if (!Validaciones.IdPositivo(ronda.IdBatalla)) return ResultadoOperacion.Fail("IdBatalla no valido");
+
+            // 2) Ganador debe pertenecer a la ronda
             if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2)
-            {
-                // Datos inconsistentes: no hacer nada.
-                return;
-            }
+                return ResultadoOperacion.Fail("GanadorRonda invalido: debe coincidir con IdJugador1 o IdJugador2");
 
-            // +10 cristales al ganador de la ronda
+            // 3) La batalla debe existir
+            var batalla = _batallaDatos.FindById(ronda.IdBatalla);
+            if (batalla == null) return ResultadoOperacion.Fail("La batalla indicada no existe (IdBatalla=" + ronda.IdBatalla + ")");
+
+            // 4) Los jugadores deben pertenecer a esa batalla
+            bool parIgualDirecto = (ronda.IdJugador1 == batalla.IdJugador1 && ronda.IdJugador2 == batalla.IdJugador2);
+            bool parIgualInvertido = (ronda.IdJugador1 == batalla.IdJugador2 && ronda.IdJugador2 == batalla.IdJugador1);
+            if (!parIgualDirecto && !parIgualInvertido)
+                return ResultadoOperacion.Fail("Los jugadores de la ronda no pertenecen a la batalla especificada");
+
+            // 5) Verificar existencia de jugadores (defensivo)
+            var j1 = _jugadorDatos.FindById(ronda.IdJugador1);
+            if (j1 == null) return ResultadoOperacion.Fail("IdJugador1 no existe (Id=" + ronda.IdJugador1 + ")");
+            var j2 = _jugadorDatos.FindById(ronda.IdJugador2);
+            if (j2 == null) return ResultadoOperacion.Fail("IdJugador2 no existe (Id=" + ronda.IdJugador2 + ")");
+
+            // 6) NUEVO: verificar propiedad de criaturas en inventario
+            if (!PerteneceAlJugadorEnInventario(ronda.IdJugador1, ronda.IdCriatura1))
+                return ResultadoOperacion.Fail("IdCriatura1 no pertenece al IdJugador1 en el inventario");
+            if (!PerteneceAlJugadorEnInventario(ronda.IdJugador2, ronda.IdCriatura2))
+                return ResultadoOperacion.Fail("IdCriatura2 no pertenece al IdJugador2 en el inventario");
+
+            // 7) Evitar duplicado (IdBatalla, IdRonda)
+            var existente = _rondaDatos.FindByBatallaAndRonda(ronda.IdBatalla, ronda.IdRonda);
+            if (existente != null)
+                return ResultadoOperacion.Fail("Ya existe la ronda " + ronda.IdRonda + " para la batalla " + ronda.IdBatalla);
+
+            // 8) Insertar ronda
+            bool ok = _rondaDatos.Insert(ronda, out errorDatos);
+            if (!ok) return ResultadoOperacion.Fail(errorDatos);
+
+            // 9) Recompensas por ronda (con datos verificados)
             var ganador = _jugadorDatos.FindById(ronda.GanadorRonda);
-            if (ganador != null)
-            {
-                ganador.Cristales += 10;
-            }
+            if (ganador != null) ganador.Cristales += 10;
 
-            // +poder a la criatura ganadora en inventario
-            // Si gano Jugador1, la criatura ganadora es IdCriatura1; si gano Jugador2, es IdCriatura2.
             int idJugadorGanador = ronda.GanadorRonda;
             int idCriaturaGanadora = (ronda.GanadorRonda == ronda.IdJugador1) ? ronda.IdCriatura1 : ronda.IdCriatura2;
 
@@ -101,48 +138,42 @@ namespace Miticax.Logica
                     break;
                 }
             }
+
+            return ResultadoOperacion.Ok();
         }
 
-        // Mantenemos el metodo combinado (para otros flujos que no requieran transaccionalidad de multiples rondas).
-        public ResultadoOperacion RegistrarRondaYRecompensas(RondaEntidad ronda, int poderGanadorIncremento, out string errorDatos)
+        // Verifica si una criatura del inventario pertenece al jugador indicado.
+        // Recorre snapshot exacto (sin nulls) para encontrar la pareja (idJugador, idCriatura).
+        private bool PerteneceAlJugadorEnInventario(int idJugador, int idCriatura)
         {
-            errorDatos = "";
+            var snap = _inventarioDatos.GetAllSnapshot();
+            for (int i = 0; i < snap.Length; i++)
+            {
+                var it = snap[i];
+                if (it.IdJugador == idJugador && it.IdCriatura == idCriatura)
+                {
+                    return true; // encontrado
+                }
+            }
+            return false; // no pertenece
+        }
 
-            // Basicas
-            if (ronda.IdRonda < 1 || ronda.IdRonda > 3) return ResultadoOperacion.Fail("IdRonda debe ser 1, 2 o 3");
-            if (!Validaciones.IdPositivo(ronda.IdBatalla)) return ResultadoOperacion.Fail("IdBatalla no valido");
+        // Mantengo estos helpers por si los usas en el flujo transaccional de la batalla:
 
-            // Ganador debe pertenecer a la ronda
-            if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2)
-                return ResultadoOperacion.Fail("GanadorRonda invalido: debe coincidir con IdJugador1 o IdJugador2");
+        // Registra una ronda y otorga +10 cristales al ganador y +5 poder a la criatura ganadora en inventario.
+        public ResultadoOperacion RegistrarRondaYRecompensasLegacy(RondaEntidad ronda, int poderGanadorIncremento, out string errorDatos)
+        {
+            // Este metodo solo se conserva si tenias dependencias antiguas.
+            // Recomendado usar RegistrarRonda + AplicarRecompensasRonda de manera transaccional.
+            return RegistrarRondaYRecompensas(ronda, poderGanadorIncremento, out errorDatos);
+        }
 
-            //  validar que la batalla exista
-            var batalla = _batallaDatos.FindById(ronda.IdBatalla);
-            if (batalla == null) return ResultadoOperacion.Fail("La batalla indicada no existe (IdBatalla=" + ronda.IdBatalla + ")");
+        // Aplica SOLAMENTE recompensas por una ronda ya registrada.
+        public void AplicarRecompensasRonda(RondaEntidad ronda, int poderGanadorIncremento)
+        {
+            // Verificacion defensiva para evitar recompensas incoherentes
+            if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2) return;
 
-            //validar que los jugadores de la ronda pertenecen a la batalla (en cualquier orden)
-            bool parIgualDirecto = (ronda.IdJugador1 == batalla.IdJugador1 && ronda.IdJugador2 == batalla.IdJugador2);
-            bool parIgualInvertido = (ronda.IdJugador1 == batalla.IdJugador2 && ronda.IdJugador2 == batalla.IdJugador1);
-            if (!parIgualDirecto && !parIgualInvertido)
-                return ResultadoOperacion.Fail("Los jugadores de la ronda no pertenecen a la batalla especificada");
-
-            // verificar existencia de participantes
-            var j1 = _jugadorDatos.FindById(ronda.IdJugador1);
-            if (j1 == null) return ResultadoOperacion.Fail("IdJugador1 no existe (Id=" + ronda.IdJugador1 + ")");
-
-            var j2 = _jugadorDatos.FindById(ronda.IdJugador2);
-            if (j2 == null) return ResultadoOperacion.Fail("IdJugador2 no existe (Id=" + ronda.IdJugador2 + ")");
-
-            // Unicidad (IdBatalla, IdRonda)
-            var existente = _rondaDatos.FindByBatallaAndRonda(ronda.IdBatalla, ronda.IdRonda);
-            if (existente != null)
-                return ResultadoOperacion.Fail("Ya existe una ronda " + ronda.IdRonda + " para la batalla " + ronda.IdBatalla);
-
-            // Insertar
-            bool ok = _rondaDatos.Insert(ronda, out errorDatos);
-            if (!ok) return ResultadoOperacion.Fail(errorDatos);
-
-            // Recompensas por ronda (ahora con jugadores garantizados existentes)
             var ganador = _jugadorDatos.FindById(ronda.GanadorRonda);
             if (ganador != null) ganador.Cristales += 10;
 
@@ -155,19 +186,17 @@ namespace Miticax.Logica
                 var item = snap[i];
                 if (item.IdJugador == idJugadorGanador && item.IdCriatura == idCriaturaGanadora)
                 {
-                    item.Poder += poderGanadorIncremento; // tipicamente +5
+                    item.Poder += poderGanadorIncremento;
                     break;
                 }
             }
-
-            return ResultadoOperacion.Ok();
         }
 
-        // Verifica si hay capacidad suficiente para registrar 'requeridas' rondas.
+        // Verifica capacidad en RondaDatos (usada por BatallaService para ejecucion transaccional)
         public bool VerificarCapacidadRondas(int requeridas, out string error)
         {
             error = "";
-            int libres = _rondaDatos.CapacidadRestante(); // consulta directa al repositorio
+            int libres = _rondaDatos.CapacidadRestante();
             if (libres < requeridas)
             {
                 error = "No hay espacio suficiente para registrar las rondas requeridas (" + requeridas + "). Libres: " + libres + ".";
@@ -176,37 +205,32 @@ namespace Miticax.Logica
             return true;
         }
 
-        // Rollback LIFO: intenta remover las ultimas 'rondasARevertir' rondas de idBatalla en el orden inverso de insercion.
+        // Rollback LIFO: intenta remover las ultimas 'rondasARevertir' rondas de idBatalla
         public void RollbackRondas(int idBatalla, int rondasARevertir)
         {
-            // Intenta revertir una por una; se detiene si la ultima no corresponde a esa batalla
             for (int i = 0; i < rondasARevertir; i++)
             {
                 bool ok = _rondaDatos.RemoveLastIfMatch(idBatalla);
-                if (!ok) break; // si ya no coincide, detenemos (evita afectar otras batallas)
+                if (!ok) break;
             }
         }
 
         // Resuelve una ronda dada la info de dos criaturas con sus stats de inventario y decide ganador.
-        // Devuelve: idJugadorGanador.
         public int ResolverRonda(Random rng, int idJugador1, int poder1, int resistencia1, int idJugador2, int poder2, int resistencia2)
         {
-            // 1) Atacante inicial aleatorio
             bool atacaPrimeroJ1 = (rng.Next(0, 2) == 0);
 
-            // 2) Ataque inicial
             if (atacaPrimeroJ1)
             {
                 int resta = resistencia2 - poder1;
-                if (resta <= 0) return idJugador1; // gana j1
+                if (resta <= 0) return idJugador1;
             }
             else
             {
                 int resta = resistencia1 - poder2;
-                if (resta <= 0) return idJugador2; // gana j2
+                if (resta <= 0) return idJugador2;
             }
 
-            // 3) Contraataque si no definio ganador
             if (atacaPrimeroJ1)
             {
                 int resta = resistencia1 - poder2;
@@ -218,14 +242,12 @@ namespace Miticax.Logica
                 if (resta <= 0) return idJugador1;
             }
 
-            // 4) Remanentes
             int rem1 = poder1 - resistencia2;
             int rem2 = poder2 - resistencia1;
 
             if (rem1 > rem2) return idJugador1;
             if (rem2 > rem1) return idJugador2;
 
-            // 5) Desempate aleatorio si iguales
             return (rng.Next(0, 2) == 0) ? idJugador1 : idJugador2;
         }
     }
