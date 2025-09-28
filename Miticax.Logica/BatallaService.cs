@@ -68,17 +68,19 @@ namespace Miticax.Logica
         }
 
         // Ejecuta una batalla (mejor de 3) y actualiza ganador, jugadores y rondas.
+        //UNED
+        //Mitica X
+        //Jorge Arias Melendez
+        //Septiembre 2025
+        //Ejecucion de batalla: validar ganador antes de mutar estado o otorgar recompensas
+
         public ResultadoOperacion EjecutarBatalla(int idBatalla, Random rng, out string error)
         {
             error = "";
 
             // 1) Buscar batalla
             var batalla = _batallaDatos.FindById(idBatalla);
-            if (batalla == null)
-            {
-                error = "Batalla no existe";
-                return ResultadoOperacion.Fail(error);
-            }
+            if (batalla == null) { error = "Batalla no existe"; return ResultadoOperacion.Fail(error); }
 
             // 2) No permitir re-ejecucion
             if (batalla.Ganador != 0)
@@ -90,22 +92,16 @@ namespace Miticax.Logica
             // 3) Equipos
             var e1 = _equipoDatos.FindById(batalla.IdEquipo1);
             if (e1 == null) { error = "Equipo1 no existe"; return ResultadoOperacion.Fail(error); }
-
             var e2 = _equipoDatos.FindById(batalla.IdEquipo2);
             if (e2 == null) { error = "Equipo2 no existe"; return ResultadoOperacion.Fail(error); }
 
-            // 4) Preparacion: evitar repetir criaturas y acumular rondas
+            // 4) Simulacion en memoria (sin efectos laterales)
             int[] usadosJ1 = new int[3];
             int[] usadosJ2 = new int[3];
-
-            int rondasGanadasJ1 = 0;
-            int rondasGanadasJ2 = 0;
-
-            // Acumulador local de rondas (sin List<>)
+            int rondasGanadasJ1 = 0, rondasGanadasJ2 = 0;
             RondaEntidad[] rondas = new RondaEntidad[3];
             int rondasCreadas = 0;
 
-            // 5) Simulacion completa (sin side-effects permanentes)
             for (int numRonda = 1; numRonda <= 3; numRonda++)
             {
                 int idC1 = SeleccionarCriaturaSinRepetir(rng, e1, usadosJ1);
@@ -129,11 +125,9 @@ namespace Miticax.Logica
                     batalla.IdJugador2, poder2, res2
                 );
 
-                if (idGanadorRonda == batalla.IdJugador1) rondasGanadasJ1++;
-                else rondasGanadasJ2++;
+                if (idGanadorRonda == batalla.IdJugador1) rondasGanadasJ1++; else rondasGanadasJ2++;
 
-                // Guardar ronda en memoria (sin insertar aun)
-                var ronda = new RondaEntidad
+                rondas[rondasCreadas] = new RondaEntidad
                 {
                     IdRonda = numRonda,
                     IdBatalla = batalla.IdBatalla,
@@ -143,45 +137,53 @@ namespace Miticax.Logica
                     IdCriatura2 = idC2,
                     GanadorRonda = idGanadorRonda
                 };
-                rondas[rondasCreadas] = ronda;
                 rondasCreadas++;
 
-                // Cierre anticipado si alguien alcanzo 2
                 if (rondasGanadasJ1 == 2 || rondasGanadasJ2 == 2) break;
             }
 
-            // 6) Determinar ganador final
+            // 5) Determinar ganador final y VERIFICAR su existencia ANTES de cualquier side-effect
             int idGanador = (rondasGanadasJ1 > rondasGanadasJ2) ? batalla.IdJugador1 : batalla.IdJugador2;
+            var ganador = _jugadorDatos.FindById(idGanador);
+            if (ganador == null)
+            {
+                error = "No se encontro el jugador ganador (IdJugador=" + idGanador + "). "
+                      + "Se aborta sin registrar rondas ni otorgar recompensas.";
+                return ResultadoOperacion.Fail(error);
+            }
 
-            // 7) Persistencia atomica de rondas (sin recompensas)
-            //    Si alguna insercion falla, no se aplican recompensas y se aborta.
+            // 6) Verificar capacidad para persistir TODAS las rondas
+            if (!_rondaService.VerificarCapacidadRondas(rondasCreadas, out string capErr))
+            {
+                error = capErr;
+                return ResultadoOperacion.Fail(error);
+            }
+
+            // 7) Persistencia atomica de rondas (sin recompensas); rollback si falla una
+            int insertadas = 0;
             for (int i = 0; i < rondasCreadas; i++)
             {
                 var resReg = _rondaService.RegistrarRonda(rondas[i], out string errRonda);
                 if (!resReg.Exito)
                 {
-                    error = "Fallo al registrar la ronda " + rondas[i].IdRonda + ": " + errRonda;
+                    _rondaService.RollbackRondas(batalla.IdBatalla, insertadas);
+                    error = "Fallo al registrar la ronda " + rondas[i].IdRonda + ": " + errRonda + ". Se revirtieron " + insertadas + " rondas.";
                     return ResultadoOperacion.Fail(error);
                 }
+                insertadas++;
             }
 
-            // 8) Aplicar recompensas por ronda SOLO despues de que todas las rondas fueron registradas
+            // 8) Recompensas por ronda (solo ahora que todas persistieron y el ganador existe)
             for (int i = 0; i < rondasCreadas; i++)
             {
                 _rondaService.AplicarRecompensasRonda(rondas[i], 5);
             }
 
-            // 9) Marcar batalla como resuelta y recompensas finales
+            // 9) Mutacion final de la batalla (ya validado el ganador)
             batalla.Ganador = idGanador;
             batalla.Fecha = DateTime.Now;
 
-            var ganador = _jugadorDatos.FindById(idGanador);
-            if (ganador == null)
-            {
-                error = "No se pudo encontrar al jugador ganador para otorgar recompensas (IdJugador=" + idGanador + ")";
-                return ResultadoOperacion.Fail(error);
-            }
-
+            // 10) Recompensa final de batalla
             ganador.Cristales += 30;
             ganador.BatallasGanadas += 1;
             ganador.Nivel = Mapeos.CalcularNivelJugadorPorVictorias(ganador.BatallasGanadas);
@@ -189,6 +191,7 @@ namespace Miticax.Logica
             error = "";
             return ResultadoOperacion.Ok();
         }
+
 
 
 

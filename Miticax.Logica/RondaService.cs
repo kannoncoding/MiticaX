@@ -84,12 +84,21 @@ namespace Miticax.Logica
         {
             errorDatos = "";
 
+            // Validaciones basicas
             if (ronda.IdRonda < 1 || ronda.IdRonda > 3) return ResultadoOperacion.Fail("IdRonda debe ser 1, 2 o 3");
             if (!Validaciones.IdPositivo(ronda.IdBatalla)) return ResultadoOperacion.Fail("IdBatalla no valido");
 
+            // NUEVO: el ganador debe pertenecer a la ronda
+            if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2)
+            {
+                return ResultadoOperacion.Fail("GanadorRonda invalido: debe coincidir con IdJugador1 o IdJugador2 de la ronda");
+            }
+
+            // Insertar la ronda
             bool ok = _rondaDatos.Insert(ronda, out errorDatos);
             if (!ok) return ResultadoOperacion.Fail(errorDatos);
 
+            // Recompensas por ronda
             var ganador = _jugadorDatos.FindById(ronda.GanadorRonda);
             if (ganador != null)
             {
@@ -99,13 +108,13 @@ namespace Miticax.Logica
             int idJugadorGanador = ronda.GanadorRonda;
             int idCriaturaGanadora = (ronda.GanadorRonda == ronda.IdJugador1) ? ronda.IdCriatura1 : ronda.IdCriatura2;
 
-            var snap = _inventarioDatos.GetAllSnapshot();
+            var snap = _inventarioDatos.GetAllSnapshot(); // snapshot sin nulos
             for (int i = 0; i < snap.Length; i++)
             {
                 var item = snap[i];
                 if (item.IdJugador == idJugadorGanador && item.IdCriatura == idCriaturaGanadora)
                 {
-                    item.Poder += poderGanadorIncremento;
+                    item.Poder += poderGanadorIncremento; // tipicamente +5
                     break;
                 }
             }
