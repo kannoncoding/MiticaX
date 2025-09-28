@@ -76,7 +76,6 @@ namespace Miticax.Presentacion
         {
             try
             {
-                // Validaciones basicas
                 int id;
                 if (!int.TryParse(txtId.Text.Trim(), out id) || id <= 0)
                 {
@@ -89,38 +88,18 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                // Construir entidad
-                var ent = new JugadorEntidad();
+                var ent = new Miticax.Entidades.JugadorEntidad();
                 ent.IdJugador = id;
                 ent.Nombre = txtNombre.Text.Trim();
                 ent.FechaNacimiento = dtpFecha.Value;
 
-                // Llamar JugadorService.Registrar por reflexion (firma flexible)
-                object resultado = null;
-                var t = Type.GetType("Miticax.Logica.JugadorService, Miticax.Logica");
-                if (t != null)
-                {
-                    var m = t.GetMethod("Registrar", new Type[] { typeof(JugadorEntidad), typeof(string).MakeByRefType() });
-                    if (m != null)
-                    {
-                        object[] pars = new object[] { ent, null };
-                        resultado = m.Invoke(null, pars); // asumiendo metodo static en servicio
-                    }
-                    else
-                    {
-                        // alternativa: Registrar(JugadorEntidad) sin out string
-                        var m2 = t.GetMethod("Registrar", new Type[] { typeof(JugadorEntidad) });
-                        if (m2 != null) resultado = m2.Invoke(null, new object[] { ent });
-                    }
-                }
+                // Llamar al servicio real (de instancia) construido en UiServiciosHelper
+                var srv = UiServiciosHelper.JugadorService();
+                string error;
+                var resultado = srv.RegistrarJugador(ent, ent.FechaNacimiento, out error);
 
-                bool exito = false;
-                string msg = null;
-                if (resultado != null)
-                {
-                    exito = (bool)(resultado.GetType().GetProperty("Exito")?.GetValue(resultado) ?? false);
-                    msg = UiServiciosHelper.ExtraerMensaje(resultado);
-                }
+                bool exito = (bool)(resultado.GetType().GetProperty("Exito")?.GetValue(resultado) ?? false);
+                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? error;
 
                 if (!exito)
                 {
@@ -130,16 +109,12 @@ namespace Miticax.Presentacion
 
                 MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // Limpiar y refrescar
-                txtId.Clear();
-                txtNombre.Clear();
-                dtpFecha.Value = DateTime.Today;
+                txtId.Clear(); txtNombre.Clear(); dtpFecha.Value = DateTime.Today;
                 txtId.Focus();
                 Refrescar();
             }
             catch (IndexOutOfRangeException)
             {
-                // Limite de arreglo
                 MessageBox.Show("No se pueden ingresar mas registros", "Limite", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -147,6 +122,7 @@ namespace Miticax.Presentacion
                 MessageBox.Show("Ocurrio un error al registrar el jugador.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         private void Refrescar()
         {
