@@ -72,7 +72,7 @@ namespace Miticax.Logica
         {
             error = "";
 
-            // Buscar batalla
+            // 1) Buscar la batalla solicitada
             var batalla = _batallaDatos.FindById(idBatalla);
             if (batalla == null)
             {
@@ -80,7 +80,15 @@ namespace Miticax.Logica
                 return ResultadoOperacion.Fail(error);
             }
 
-            // Obtener equipos
+            // 2) Guard de seguridad: no permitir re-ejecutar una batalla ya finalizada
+            //    Si Ganador != 0, significa que ya se resolvio previamente y no debe repetirse.
+            if (batalla.Ganador != 0)
+            {
+                error = "La batalla ya fue ejecutada anteriormente (IdBatalla=" + batalla.IdBatalla + ", Ganador=" + batalla.Ganador + ")";
+                return ResultadoOperacion.Fail(error);
+            }
+
+            // 3) Obtener y validar equipos de ambos jugadores
             var e1 = _equipoDatos.FindById(batalla.IdEquipo1);
             if (e1 == null)
             {
@@ -95,21 +103,21 @@ namespace Miticax.Logica
                 return ResultadoOperacion.Fail(error);
             }
 
-            // Control de criaturas usadas (no repetir dentro de la misma batalla)
+            // 4) Estructuras auxiliares para evitar repetir criaturas de un mismo equipo en esta batalla
             int[] usadosJ1 = new int[3];
             int[] usadosJ2 = new int[3];
 
             int rondasGanadasJ1 = 0;
             int rondasGanadasJ2 = 0;
 
-            // Hasta 3 rondas (o antes si alguien llega a 2)
+            // 5) Ejecutar hasta 3 rondas (o terminar antes si alguien alcanza 2 victorias)
             for (int numRonda = 1; numRonda <= 3; numRonda++)
             {
-                // Seleccionar criatura no repetida de cada equipo
+                // 5.1) Seleccionar criaturas no repetidas para esta ronda
                 int idC1 = SeleccionarCriaturaSinRepetir(rng, e1, usadosJ1);
                 int idC2 = SeleccionarCriaturaSinRepetir(rng, e2, usadosJ2);
 
-                // Stats actuales desde inventario
+                // 5.2) Obtener stats actuales desde inventario (poder/resistencia)
                 int poder1, res1, poder2, res2;
 
                 if (!StatsDeInventario(batalla.IdJugador1, idC1, out poder1, out res1))
@@ -124,7 +132,7 @@ namespace Miticax.Logica
                     return ResultadoOperacion.Fail(error);
                 }
 
-                // Resolver ronda
+                // 5.3) Resolver la ronda segun reglas
                 int idGanadorRonda = _rondaService.ResolverRonda(
                     rng,
                     batalla.IdJugador1, poder1, res1,
@@ -134,7 +142,7 @@ namespace Miticax.Logica
                 if (idGanadorRonda == batalla.IdJugador1) rondasGanadasJ1++;
                 else rondasGanadasJ2++;
 
-                // Registrar ronda + recompensas
+                // 5.4) Registrar la ronda y aplicar recompensas por ronda
                 var ronda = new RondaEntidad
                 {
                     IdRonda = numRonda,
@@ -153,16 +161,16 @@ namespace Miticax.Logica
                     return ResultadoOperacion.Fail(error);
                 }
 
-                // ¿Ya hay ganador de la batalla (mejor de 3)?
+                // 5.5) Cierre anticipado si ya hay 2 rondas ganadas por alguno
                 if (rondasGanadasJ1 == 2 || rondasGanadasJ2 == 2) break;
             }
 
-            // Determinar ganador final
+            // 6) Determinar el ganador final (mejor de 3)
             int idGanador = (rondasGanadasJ1 > rondasGanadasJ2) ? batalla.IdJugador1 : batalla.IdJugador2;
-            batalla.Ganador = idGanador;
-            batalla.Fecha = DateTime.Now;
+            batalla.Ganador = idGanador;           // marcar batalla como resuelta (evita re-ejecucion futura)
+            batalla.Fecha = DateTime.Now;          // actualizar timestamp de resolucion
 
-            // Recompensas al ganador
+            // 7) Aplicar recompensas finales al ganador
             var ganador = _jugadorDatos.FindById(idGanador);
             if (ganador == null)
             {
@@ -170,14 +178,15 @@ namespace Miticax.Logica
                 return ResultadoOperacion.Fail(error);
             }
 
-            ganador.Cristales += 30;              // +30 por ganar la batalla
-            ganador.BatallasGanadas += 1;         // +1 victoria
+            ganador.Cristales += 30;               // +30 por ganar la batalla
+            ganador.BatallasGanadas += 1;          // +1 victoria al ranking
             ganador.Nivel = Mapeos.CalcularNivelJugadorPorVictorias(ganador.BatallasGanadas);
 
-            // Exito: mantener error vacio
+            // 8) Exito
             error = "";
             return ResultadoOperacion.Ok();
         }
+
 
 
         // Selecciona una criatura random del equipo que no se haya usado aun en esta batalla.
