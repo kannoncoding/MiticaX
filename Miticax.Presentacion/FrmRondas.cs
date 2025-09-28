@@ -6,12 +6,14 @@
 
 using System;
 using System.Windows.Forms;
-using Miticax.Datos;
 
 namespace Miticax.Presentacion
 {
     public class FrmRondas : Form
     {
+        // Instancia de Datos via helper (metodos de instancia)
+        private readonly Miticax.Datos.RondaDatos _rondaDatos = UiServiciosHelper.RondaDatos();
+
         private Label lblBatalla; private TextBox txtBatalla;
         private Button btnBuscar; private Button btnCerrar;
         private DataGridView grid;
@@ -67,8 +69,10 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                var arr = RondaDatos.GetByBatallaSnapshot(id);
-                grid.DataSource = arr;
+                // Tomamos todas las rondas y filtramos por IdBatalla (sin LINQ)
+                var todas = _rondaDatos.GetAllSnapshot();
+                var filtradas = UiServiciosHelper.FiltrarPorCampoIgual(todas, "IdBatalla", id);
+                grid.DataSource = filtradas;
             }
             catch (Exception ex)
             {
