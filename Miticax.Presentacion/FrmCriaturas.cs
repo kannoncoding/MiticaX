@@ -1,0 +1,247 @@
+﻿//UNED
+//Mitica X
+//Jorge Arias Melendez
+//Septiembre 2025
+//ABM de criaturas + grid; aplica reglas UI, mensajes y mapeo de descripciones
+
+using System;
+using System.Windows.Forms;
+using Miticax.Entidades;
+using Miticax.Logica;
+using Miticax.Datos;
+
+namespace Miticax.Presentacion
+{
+    public class FrmCriaturas : Form
+    {
+        private Label lblId; private TextBox txtId;
+        private Label lblNombre; private TextBox txtNombre;
+        private Label lblTipo; private ComboBox cboTipo;
+        private Label lblNivel; private ComboBox cboNivel;
+        private Label lblPoder; private NumericUpDown nudPoder;
+        private Label lblResistencia; private NumericUpDown nudResistencia;
+        private Label lblCosto; private NumericUpDown nudCosto;
+
+        private Button btnAgregar; private Button btnCerrar;
+        private DataGridView grid;
+
+        public FrmCriaturas()
+        {
+            Text = "Criaturas - Registrar y Consultar";
+            Width = 900;
+            Height = 600;
+            StartPosition = FormStartPosition.CenterParent;
+
+            // Controles
+            lblId = new Label() { Text = "IdCriatura:", Left = 20, Top = 20, Width = 100 };
+            txtId = new TextBox() { Left = 130, Top = 16, Width = 120, TabIndex = 0 };
+
+            lblNombre = new Label() { Text = "Nombre:", Left = 270, Top = 20, Width = 100 };
+            txtNombre = new TextBox() { Left = 340, Top = 16, Width = 160, TabIndex = 1 };
+
+            lblTipo = new Label() { Text = "Tipo:", Left = 520, Top = 20, Width = 60 };
+            cboTipo = new ComboBox() { Left = 560, Top = 16, Width = 140, DropDownStyle = ComboBoxStyle.DropDownList, TabIndex = 2 };
+            // Tipos permitidos segun enunciado: agua, tierra, aire, fuego
+            cboTipo.Items.AddRange(new object[] { "agua", "tierra", "aire", "fuego" });
+
+            lblNivel = new Label() { Text = "Nivel:", Left = 20, Top = 60, Width = 100 };
+            cboNivel = new ComboBox() { Left = 130, Top = 56, Width = 160, DropDownStyle = ComboBoxStyle.DropDownList, TabIndex = 3 };
+            // Niveles: 01-Iniciado, 02-Aprendiz, 03-Estudiante, 04-Avanzado, 05-Maestro
+            cboNivel.Items.AddRange(new object[]{
+                "01-Iniciado","02-Aprendiz","03-Estudiante","04-Avanzado","05-Maestro"
+            });
+
+            lblPoder = new Label() { Text = "Poder:", Left = 310, Top = 60, Width = 60 };
+            nudPoder = new NumericUpDown() { Left = 360, Top = 56, Width = 80, Minimum = 0, Maximum = 100000, TabIndex = 4 };
+
+            lblResistencia = new Label() { Text = "Resistencia:", Left = 460, Top = 60, Width = 90 };
+            nudResistencia = new NumericUpDown() { Left = 550, Top = 56, Width = 80, Minimum = 0, Maximum = 100000, TabIndex = 5 };
+
+            lblCosto = new Label() { Text = "Costo (Cristales):", Left = 650, Top = 60, Width = 120 };
+            nudCosto = new NumericUpDown() { Left = 770, Top = 56, Width = 80, Minimum = 0, Maximum = 1000000, TabIndex = 6 };
+
+            btnAgregar = new Button() { Text = "Agregar", Left = 560, Top = 100, Width = 120, TabIndex = 7 };
+            btnCerrar = new Button() { Text = "Cerrar", Left = 690, Top = 100, Width = 120, TabIndex = 8 };
+
+            // Accept/Cancel
+            AcceptButton = btnAgregar;
+            CancelButton = btnCerrar;
+
+            btnAgregar.Click += BtnAgregar_Click;
+            btnCerrar.Click += (s, e) => Close();
+
+            // DataGridView
+            grid = new DataGridView();
+            grid.Left = 20;
+            grid.Top = 150;
+            grid.Width = 830;
+            grid.Height = 380;
+            grid.ReadOnly = true;
+            grid.AllowUserToAddRows = false;
+            grid.AllowUserToDeleteRows = false;
+            grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            grid.AutoGenerateColumns = false;
+
+            // Definir columnas manualmente (headers en español; mapeo con DTO de grid)
+            grid.Columns.Add(new DataGridViewTextBoxColumn() { HeaderText = "Id", DataPropertyName = "IdCriatura", Width = 60 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn() { HeaderText = "Nombre", DataPropertyName = "Nombre", Width = 140 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn() { HeaderText = "Tipo", DataPropertyName = "TipoTexto", Width = 100 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn() { HeaderText = "Nivel", DataPropertyName = "NivelTexto", Width = 120 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn() { HeaderText = "Poder", DataPropertyName = "Poder", Width = 80 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn() { HeaderText = "Resistencia", DataPropertyName = "Resistencia", Width = 100 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn() { HeaderText = "Costo", DataPropertyName = "Costo", Width = 80 });
+
+            Controls.AddRange(new Control[]{
+                lblId, txtId, lblNombre, txtNombre, lblTipo, cboTipo, lblNivel, cboNivel,
+                lblPoder, nudPoder, lblResistencia, nudResistencia, lblCosto, nudCosto,
+                btnAgregar, btnCerrar, grid
+            });
+
+            // Cargar grid inicial
+            RefrescarGrid();
+        }
+
+        private void BtnAgregar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Validaciones basicas UI
+                int id;
+                if (!int.TryParse(txtId.Text.Trim(), out id) || id <= 0)
+                {
+                    MessageBox.Show("IdCriatura invalido.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(txtNombre.Text))
+                {
+                    MessageBox.Show("El nombre es requerido.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                if (cboTipo.SelectedIndex < 0)
+                {
+                    MessageBox.Show("Debe seleccionar el tipo.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                if (cboNivel.SelectedIndex < 0)
+                {
+                    MessageBox.Show("Debe seleccionar el nivel.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Armar entidad
+                var ent = new CriaturaEntidad();
+                ent.IdCriatura = id;
+                ent.Nombre = txtNombre.Text.Trim();
+                ent.Tipo = cboTipo.SelectedItem.ToString();          // agua/tierra/aire/fuego
+                ent.Nivel = cboNivel.SelectedIndex + 1;              // 1..5
+                ent.Poder = (int)nudPoder.Value;
+                ent.Resistencia = (int)nudResistencia.Value;
+                ent.Costo = (int)nudCosto.Value;
+
+                // Registrar via logica
+                string errorDatos;
+                var r = CriaturaService.Registrar(ent, out errorDatos);
+                if (!r.Exito)
+                {
+                    // Mostrar mensaje coherente segun enunciado
+                    MessageBox.Show(r.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Exito
+                MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Limpiar campos para siguiente alta
+                txtId.Clear();
+                txtNombre.Clear();
+                cboTipo.SelectedIndex = -1;
+                cboNivel.SelectedIndex = -1;
+                nudPoder.Value = 0;
+                nudResistencia.Value = 0;
+                nudCosto.Value = 0;
+                txtId.Focus();
+
+                // Refrescar grid
+                RefrescarGrid();
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // Llego al limite del arreglo
+                MessageBox.Show("No se pueden ingresar mas registros", "Limite", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocurrio un error al registrar la criatura.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void RefrescarGrid()
+        {
+            try
+            {
+                // Segun etapa, se pidio refrescar con CriaturaDatos.GetAllSnapshot()
+                var arr = CriaturaDatos.GetAllSnapshot();
+
+                // Mapear a un DTO de grid para mostrar descripciones (sin LINQ ni listas)
+                var filas = ConstruirFilasGrid(arr);
+                grid.DataSource = filas;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocurrio un error al cargar los datos.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // DTO interno para el grid, mostrando textos descriptivos
+        private class CriaturaGridFila
+        {
+            public int IdCriatura { get; set; }
+            public string Nombre { get; set; }
+            public string TipoTexto { get; set; }
+            public string NivelTexto { get; set; }
+            public int Poder { get; set; }
+            public int Resistencia { get; set; }
+            public int Costo { get; set; }
+        }
+
+        private object ConstruirFilasGrid(CriaturaEntidad[] arr)
+        {
+            if (arr == null) return null;
+
+            // Contar elementos no nulos
+            int count = 0;
+            for (int i = 0; i < arr.Length; i++)
+                if (arr[i] != null) count++;
+
+            var result = new CriaturaGridFila[count];
+            int j = 0;
+            for (int i = 0; i < arr.Length; i++)
+            {
+                var c = arr[i];
+                if (c == null) continue;
+
+                var fila = new CriaturaGridFila();
+                fila.IdCriatura = c.IdCriatura;
+                fila.Nombre = c.Nombre;
+                fila.TipoTexto = c.Tipo; // si la logica expone otra descripcion, reemplazar aqui
+                fila.NivelTexto = NivelATexto(c.Nivel);
+                fila.Poder = c.Poder;
+                fila.Resistencia = c.Resistencia;
+                fila.Costo = c.Costo;
+
+                result[j++] = fila;
+            }
+            return result;
+        }
+
+        private string NivelATexto(int nivel)
+        {
+            if (nivel == 1) return "01-Iniciado";
+            if (nivel == 2) return "02-Aprendiz";
+            if (nivel == 3) return "03-Estudiante";
+            if (nivel == 4) return "04-Avanzado";
+            if (nivel == 5) return "05-Maestro";
+            return "N/A";
+        }
+    }
+}
