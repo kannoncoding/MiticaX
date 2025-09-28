@@ -15,12 +15,14 @@ namespace Miticax.Logica
         private readonly RondaDatos _rondaDatos;
         private readonly InventarioDatos _inventarioDatos;
         private readonly JugadorDatos _jugadorDatos;
+        private readonly BatallaDatos _batallaDatos; //para validar existencia/participantes de la batalla
 
-        public RondaService(RondaDatos rondaDatos, InventarioDatos inventarioDatos, JugadorDatos jugadorDatos)
+        public RondaService(RondaDatos rondaDatos, InventarioDatos inventarioDatos, JugadorDatos jugadorDatos, BatallaDatos batallaDatos)
         {
             _rondaDatos = rondaDatos;
             _inventarioDatos = inventarioDatos;
             _jugadorDatos = jugadorDatos;
+            _batallaDatos = batallaDatos; // guardar referencia para validaciones
         }
 
         // registra una ronda SIN tocar cristales ni inventario
@@ -36,7 +38,19 @@ namespace Miticax.Logica
             if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2)
                 return ResultadoOperacion.Fail("GanadorRonda invalido: debe coincidir con IdJugador1 o IdJugador2");
 
-            // NUEVO: verificar existencia de participantes
+            // validar que la batalla exista
+            var batalla = _batallaDatos.FindById(ronda.IdBatalla);
+            if (batalla == null) return ResultadoOperacion.Fail("La batalla indicada no existe (IdBatalla=" + ronda.IdBatalla + ")");
+
+            // validar que los jugadores de la ronda pertenecen a la batalla (en cualquier orden)
+            bool parIgualDirecto = (ronda.IdJugador1 == batalla.IdJugador1 && ronda.IdJugador2 == batalla.IdJugador2);
+            bool parIgualInvertido = (ronda.IdJugador1 == batalla.IdJugador2 && ronda.IdJugador2 == batalla.IdJugador1);
+            if (!parIgualDirecto && !parIgualInvertido)
+                return ResultadoOperacion.Fail("Los jugadores de la ronda no pertenecen a la batalla especificada");
+
+
+
+            // verificar existencia de participantes
             var j1 = _jugadorDatos.FindById(ronda.IdJugador1);
             if (j1 == null) return ResultadoOperacion.Fail("IdJugador1 no existe (Id=" + ronda.IdJugador1 + ")");
 
@@ -102,7 +116,17 @@ namespace Miticax.Logica
             if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2)
                 return ResultadoOperacion.Fail("GanadorRonda invalido: debe coincidir con IdJugador1 o IdJugador2");
 
-            // NUEVO: verificar existencia de participantes
+            //  validar que la batalla exista
+            var batalla = _batallaDatos.FindById(ronda.IdBatalla);
+            if (batalla == null) return ResultadoOperacion.Fail("La batalla indicada no existe (IdBatalla=" + ronda.IdBatalla + ")");
+
+            //validar que los jugadores de la ronda pertenecen a la batalla (en cualquier orden)
+            bool parIgualDirecto = (ronda.IdJugador1 == batalla.IdJugador1 && ronda.IdJugador2 == batalla.IdJugador2);
+            bool parIgualInvertido = (ronda.IdJugador1 == batalla.IdJugador2 && ronda.IdJugador2 == batalla.IdJugador1);
+            if (!parIgualDirecto && !parIgualInvertido)
+                return ResultadoOperacion.Fail("Los jugadores de la ronda no pertenecen a la batalla especificada");
+
+            // verificar existencia de participantes
             var j1 = _jugadorDatos.FindById(ronda.IdJugador1);
             if (j1 == null) return ResultadoOperacion.Fail("IdJugador1 no existe (Id=" + ronda.IdJugador1 + ")");
 
