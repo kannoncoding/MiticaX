@@ -6,14 +6,16 @@
 
 using System;
 using System.Windows.Forms;
-using Miticax.Logica;
-using Miticax.Datos;
-using Miticax.Entidades;
 
 namespace Miticax.Presentacion
 {
     public class FrmEquipos : Form
     {
+        // Instancias de Datos via helper (metodos de instancia)
+        private readonly Miticax.Datos.JugadorDatos _jugadorDatos = UiServiciosHelper.JugadorDatos();
+        private readonly Miticax.Datos.InventarioDatos _inventarioDatos = UiServiciosHelper.InventarioDatos();
+        private readonly Miticax.Datos.EquipoDatos _equipoDatos = UiServiciosHelper.EquipoDatos();
+
         private Label lblJugador; private ComboBox cboJugador;
         private Label lblC1; private ComboBox cboC1;
         private Label lblC2; private ComboBox cboC2;
@@ -76,7 +78,7 @@ namespace Miticax.Presentacion
         {
             try
             {
-                var jugadores = JugadorDatos.GetAllSnapshot();
+                var jugadores = _jugadorDatos.GetAllSnapshot();
                 cboJugador.Items.Clear();
                 for (int i = 0; i < jugadores.Length; i++)
                 {
@@ -98,11 +100,26 @@ namespace Miticax.Presentacion
                 if (cboJugador.SelectedIndex < 0) return;
 
                 int idJugador = ParseLeadingInt(cboJugador.SelectedItem.ToString());
-                var inv = InventarioDatos.GetByJugadorSnapshot(idJugador);
+
+                // Filtrar inventario por IdJugador (sin LINQ)
+                var invAll = _inventarioDatos.GetAllSnapshot();
+                var inv = UiServiciosHelper.FiltrarPorCampoIgual(invAll, "IdJugador", idJugador);
+
                 for (int i = 0; i < inv.Length; i++)
                 {
                     if (inv[i] == null) continue;
-                    string texto = inv[i].IdCriatura + " - Poder " + inv[i].Poder + " / Res " + inv[i].Resistencia;
+
+                    // Acceso por nombre de propiedad para no acoplar campos opcionales
+                    int idCriatura = 0;
+                    int poder = 0;
+                    int resistencia = 0;
+
+                    var t = inv[i].GetType();
+                    var pIdC = t.GetProperty("IdCriatura"); if (pIdC != null) idCriatura = (int)pIdC.GetValue(inv[i]);
+                    var pPod = t.GetProperty("Poder"); if (pPod != null) poder = (int)pPod.GetValue(inv[i]);
+                    var pRes = t.GetProperty("Resistencia"); if (pRes != null) resistencia = (int)pRes.GetValue(inv[i]);
+
+                    string texto = idCriatura + " - Poder " + poder + " / Res " + resistencia;
                     cboC1.Items.Add(texto);
                     cboC2.Items.Add(texto);
                     cboC3.Items.Add(texto);
@@ -129,18 +146,64 @@ namespace Miticax.Presentacion
                 int c2 = ParseLeadingInt(cboC2.SelectedItem.ToString());
                 int c3 = ParseLeadingInt(cboC3.SelectedItem.ToString());
 
-                string error;
-                var r = EquipoService.Registrar(idJugador, c1, c2, c3, out error);
-                if (!r.Exito)
+                // Registrar equipo via reflexion (tolera firmas distintas)
+                bool exito = false;
+                string msg = null;
+                object ro = null;
+
+                var tSrv = Type.GetType("Miticax.Logica.EquipoService, Miticax.Logica");
+                if (tSrv != null)
                 {
-                    MessageBox.Show(r.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    // Opcion A: Registrar(int idJugador, int c1, int c2, int c3, out string)
+                    var m1 = tSrv.GetMethod("Registrar", new Type[] { typeof(int), typeof(int), typeof(int), typeof(int), typeof(string).MakeByRefType() });
+                    if (m1 != null)
+                    {
+                        object[] pars = new object[] { idJugador, c1, c2, c3, null };
+                        ro = m1.Invoke(null, pars);
+                        msg = UiServiciosHelper.ExtraerMensaje(ro) ?? (pars[4] as string);
+                    }
+                    else
+                    {
+                        // Opcion B: Registrar(EquipoEntidad, out string)
+                        var tEnt = Type.GetType("Miticax.Entidades.EquipoEntidad, Miticax.Entidades");
+                        var m2 = (tEnt != null) ? tSrv.GetMethod("Registrar", new Type[] { tEnt, typeof(string).MakeByRefType() }) : null;
+                        if (tEnt != null && m2 != null)
+                        {
+                            var ent = Activator.CreateInstance(tEnt);
+                            tEnt.GetProperty("IdJugador")?.SetValue(ent, idJugador);
+                            tEnt.GetProperty("IdCriatura1")?.SetValue(ent, c1);
+                            tEnt.GetProperty("IdCriatura2")?.SetValue(ent, c2);
+                            tEnt.GetProperty("IdCriatura3")?.SetValue(ent, c3);
+
+                            object[] pars = new object[] { ent, null };
+                            ro = m2.Invoke(null, pars);
+                            msg = UiServiciosHelper.ExtraerMensaje(ro) ?? (pars[1] as string);
+                        }
+                    }
+                }
+
+                if (ro != null)
+                {
+                    var pEx = ro.GetType().GetProperty("Exito");
+                    if (pEx != null) exito = (bool)(pEx.GetValue(ro) ?? false);
+                    msg = UiServiciosHelper.ExtraerMensaje(ro) ?? msg;
+                }
+
+                if (!exito)
+                {
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
                 MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                cboJugador.SelectedIndex = -1; cboC1.SelectedIndex = -1; cboC2.SelectedIndex = -1; cboC3.SelectedIndex = -1;
+                // Reset UI
+                cboJugador.SelectedIndex = -1;
+                cboC1.SelectedIndex = -1;
+                cboC2.SelectedIndex = -1;
+                cboC3.SelectedIndex = -1;
                 cboJugador.Focus();
+
                 RefrescarGrid();
             }
             catch (IndexOutOfRangeException)
@@ -165,7 +228,7 @@ namespace Miticax.Presentacion
         {
             try
             {
-                var arr = EquipoDatos.GetAllSnapshot();
+                var arr = _equipoDatos.GetAllSnapshot();
                 grid.DataSource = arr;
             }
             catch (Exception ex)
