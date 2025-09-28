@@ -25,8 +25,11 @@ namespace Miticax.Presentacion
             // Configuracion basica de ventana
             Text = "MiticaX - Menu Principal";
             StartPosition = FormStartPosition.CenterScreen;
-            Width = 520;
-            Height = 360;
+            Width = 560;            // mas ancho para que no se corten textos
+            Height = 520;           // mas alto para ver todo
+            MinimumSize = new System.Drawing.Size(560, 520);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false; MinimizeBox = false;
 
             FormBorderStyle = FormBorderStyle.FixedDialog; // evita resize
             MaximizeBox = false; MinimizeBox = false;      // limpia la UI
@@ -39,7 +42,17 @@ namespace Miticax.Presentacion
             panel.Dock = DockStyle.Fill;
             panel.Padding = new Padding(20);
             panel.AutoScroll = true;
+            panel.FlowDirection = FlowDirection.TopDown; // columna unica
+            panel.WrapContents = false;                  // no saltar a segunda columna
             Controls.Add(panel);
+
+            // helper: ajustar ancho de botones al panel
+            panel.SizeChanged += (s, e) =>
+            {
+                int ancho = panel.ClientSize.Width - 40; // padding izq+der (20+20)
+                foreach (Control c in panel.Controls)
+                    if (c is Button) c.Width = ancho;
+            };
 
             // Crear botones
             btnCriaturas = CrearBoton("Criaturas", (s, e) => Abrir(new FrmCriaturas()));
@@ -70,12 +83,13 @@ namespace Miticax.Presentacion
         {
             var b = new Button();
             b.Text = texto;
-            b.Width = 440;
+            b.Width = 440;              // valor inicial; luego se ajusta en SizeChanged
             b.Height = 40;
             b.Margin = new Padding(5);
             b.Click += onClick;
             return b;
         }
+
 
         private void Abrir(Form frm)
         {
