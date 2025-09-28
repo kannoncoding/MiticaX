@@ -36,7 +36,12 @@ namespace Miticax.Logica
             var criatura = _criaturaDatos.FindById(idCriatura);
             if (criatura == null) return ResultadoOperacion.Fail("Criatura no existe");
 
-            // Duplicado en inventario del jugador (busqueda lineal con snapshot)
+            // Salvaguardas de integridad (por si hay datos legado o registros inconsistentes)
+            if (criatura.Costo < 0) return ResultadoOperacion.Fail("Costo de la criatura invalido (negativo)");
+            if (!Validaciones.CostoPorNivelValido(criatura.Nivel, criatura.Costo))
+                return ResultadoOperacion.Fail("Costo no valido para el nivel de la criatura");
+
+            // Duplicado en inventario del jugador (busqueda lineal con snapshot exacto)
             var snap = _inventarioDatos.GetAllSnapshot();
             for (int i = 0; i < snap.Length; i++)
             {
@@ -47,7 +52,7 @@ namespace Miticax.Logica
                 }
             }
 
-            // Verificar cristales suficientes
+            // Verificar cristales suficientes (permite costo 0; no altera saldo)
             if (jugador.Cristales < criatura.Costo)
             {
                 return ResultadoOperacion.Fail("No posee la cantidad de cristales suficientes para obtener la criatura");
@@ -71,6 +76,7 @@ namespace Miticax.Logica
 
             return ResultadoOperacion.Ok();
         }
+
 
 
 
