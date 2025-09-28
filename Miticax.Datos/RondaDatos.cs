@@ -10,15 +10,18 @@ namespace Miticax.Datos
 {
     public static class RondaDatos
     {
+        // Ahora el arreglo soporta CapacidadBatallas * MaxRondasPorBatalla (best-of-3).
         private static readonly RondaEntidad[] _items = new RondaEntidad[ConstantesDatos.CapacidadRondas];
+
+        // Contador real de rondas usadas.
         private static int _count = 0;
 
-        // Inserta una ronda si hay espacio.
+        // Inserta una ronda si hay espacio total suficiente.
         public static bool Insert(RondaEntidad item, out string error)
         {
             if (_count >= _items.Length)
             {
-                error = "No se pueden ingresar mas registros (rondas).";
+                error = "No se pueden ingresar mas registros (rondas): capacidad total alcanzada.";
                 return false;
             }
 
@@ -29,7 +32,7 @@ namespace Miticax.Datos
             return true;
         }
 
-        // Busca una ronda por su IdRonda dentro de una batalla (clave logica: IdBatalla + IdRonda).
+        // Busca una ronda por clave logica: IdBatalla + IdRonda.
         public static RondaEntidad? FindByBatallaAndRonda(int idBatalla, int idRonda)
         {
             for (int i = 0; i < _count; i++)
@@ -43,7 +46,7 @@ namespace Miticax.Datos
             return null;
         }
 
-        // Snapshot de todas las rondas.
+        // Snapshot de todas las rondas almacenadas.
         public static RondaEntidad[] GetAllSnapshot()
         {
             var copia = new RondaEntidad[_count];
@@ -114,3 +117,4 @@ namespace Miticax.Datos
         }
     }
 }
+
