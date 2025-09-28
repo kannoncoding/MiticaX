@@ -16,14 +16,16 @@ namespace Miticax.Logica
         private readonly InventarioDatos _inventarioDatos;
         private readonly JugadorDatos _jugadorDatos;
         private readonly BatallaDatos _batallaDatos; // validar existencia/participantes de la batalla
+        private readonly EquipoDatos _equipoDatos;
 
         // Constructor (asegurar inyectar BatallaDatos al crear el servicio)
-        public RondaService(RondaDatos rondaDatos, InventarioDatos inventarioDatos, JugadorDatos jugadorDatos, BatallaDatos batallaDatos)
+        public RondaService(RondaDatos rondaDatos, InventarioDatos inventarioDatos, JugadorDatos jugadorDatos, BatallaDatos batallaDatos, EquipoDatos equipoDatos)
         {
             _rondaDatos = rondaDatos;
             _inventarioDatos = inventarioDatos;
             _jugadorDatos = jugadorDatos;
             _batallaDatos = batallaDatos;
+            _equipoDatos = equipoDatos;
         }
 
         // -------------------------------------------------------------
@@ -45,7 +47,7 @@ namespace Miticax.Logica
             var batalla = _batallaDatos.FindById(ronda.IdBatalla);
             if (batalla == null) return ResultadoOperacion.Fail("La batalla indicada no existe (IdBatalla=" + ronda.IdBatalla + ")");
 
-            // 3.1- no se pueden registrar rondas si la batalla ya tiene ganador
+            // 3.1) No registrar rondas si la batalla ya tiene ganador
             if (batalla.Ganador != 0)
                 return ResultadoOperacion.Fail("La batalla ya finalizo; no se pueden registrar mas rondas (Ganador=" + batalla.Ganador + ")");
 
@@ -61,7 +63,35 @@ namespace Miticax.Logica
             var j2 = _jugadorDatos.FindById(ronda.IdJugador2);
             if (j2 == null) return ResultadoOperacion.Fail("IdJugador2 no existe (Id=" + ronda.IdJugador2 + ")");
 
-            // 6) NUEVO: verificar que cada criatura pertenezca al jugador declarado
+            // 5.1) Cargar equipos de la batalla
+            var equipo1 = _equipoDatos.FindById(batalla.IdEquipo1);
+            var equipo2 = _equipoDatos.FindById(batalla.IdEquipo2);
+            if (equipo1 == null || equipo2 == null) return ResultadoOperacion.Fail("Equipos de la batalla no existen");
+
+            // Mapear que equipo corresponde a cada jugador de la ronda (reutilizando parIgualDirecto/parIgualInvertido)
+            EquipoEntidad equipoDeJ1EnRonda;
+            EquipoEntidad equipoDeJ2EnRonda;
+
+            if (parIgualDirecto)
+            {
+                // Jugador1 de la ronda usa Equipo1 de la batalla; Jugador2 usa Equipo2
+                equipoDeJ1EnRonda = equipo1;
+                equipoDeJ2EnRonda = equipo2;
+            }
+            else // parIgualInvertido es true (ya se valido arriba)
+            {
+                // Jugador1 de la ronda usa Equipo2; Jugador2 usa Equipo1
+                equipoDeJ1EnRonda = equipo2;
+                equipoDeJ2EnRonda = equipo1;
+            }
+
+            // 5.2) Enforzar roster (las criaturas declaradas deben estar en sus equipos)
+            if (!EsCriaturaDelEquipo(equipoDeJ1EnRonda, ronda.IdCriatura1))
+                return ResultadoOperacion.Fail("IdCriatura1 no pertenece al roster del jugador1 para esta batalla");
+            if (!EsCriaturaDelEquipo(equipoDeJ2EnRonda, ronda.IdCriatura2))
+                return ResultadoOperacion.Fail("IdCriatura2 no pertenece al roster del jugador2 para esta batalla");
+
+            // 6) Verificar que cada criatura pertenezca al jugador en inventario
             if (!PerteneceAlJugadorEnInventario(ronda.IdJugador1, ronda.IdCriatura1))
                 return ResultadoOperacion.Fail("IdCriatura1 no pertenece al IdJugador1 en el inventario");
             if (!PerteneceAlJugadorEnInventario(ronda.IdJugador2, ronda.IdCriatura2))
@@ -78,6 +108,7 @@ namespace Miticax.Logica
 
             return ResultadoOperacion.Ok();
         }
+
 
         // ---------------------------------------------------------------------
         // RegistrarRondaYRecompensas: mismas validaciones + otorgar recompensas
@@ -166,7 +197,16 @@ namespace Miticax.Logica
             return false; // no pertenece
         }
 
-        // Mantengo estos helpers por si los usas en el flujo transaccional de la batalla:
+        // Verifica si una criatura esta en el roster del equipo
+        private bool EsCriaturaDelEquipo(EquipoEntidad eq, int idCriatura)
+        {
+            // Inline checks sin LINQ ni colecciones
+            if (eq.IdCriatura1 == idCriatura) return true;
+            if (eq.IdCriatura2 == idCriatura) return true;
+            if (eq.IdCriatura3 == idCriatura) return true;
+            return false;
+        }
+
 
         // Registra una ronda y otorga +10 cristales al ganador y +5 poder a la criatura ganadora en inventario.
         public ResultadoOperacion RegistrarRondaYRecompensasLegacy(RondaEntidad ronda, int poderGanadorIncremento, out string errorDatos)
