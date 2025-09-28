@@ -28,7 +28,7 @@ namespace Miticax.Logica
         {
             errorDatos = "";
 
-            // Rango de ronda y IdBatalla valido
+            // Validaciones minimas
             if (ronda.IdRonda < 1 || ronda.IdRonda > 3) return ResultadoOperacion.Fail("IdRonda debe ser 1, 2 o 3");
             if (!Validaciones.IdPositivo(ronda.IdBatalla)) return ResultadoOperacion.Fail("IdBatalla no valido");
 
@@ -36,7 +36,14 @@ namespace Miticax.Logica
             if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2)
                 return ResultadoOperacion.Fail("GanadorRonda invalido: debe coincidir con IdJugador1 o IdJugador2");
 
-            // NUEVO: unicidad por (IdBatalla, IdRonda)
+            // NUEVO: verificar existencia de participantes
+            var j1 = _jugadorDatos.FindById(ronda.IdJugador1);
+            if (j1 == null) return ResultadoOperacion.Fail("IdJugador1 no existe (Id=" + ronda.IdJugador1 + ")");
+
+            var j2 = _jugadorDatos.FindById(ronda.IdJugador2);
+            if (j2 == null) return ResultadoOperacion.Fail("IdJugador2 no existe (Id=" + ronda.IdJugador2 + ")");
+
+            // Unicidad (IdBatalla, IdRonda)
             var existente = _rondaDatos.FindByBatallaAndRonda(ronda.IdBatalla, ronda.IdRonda);
             if (existente != null)
                 return ResultadoOperacion.Fail("Ya existe una ronda " + ronda.IdRonda + " para la batalla " + ronda.IdBatalla);
@@ -95,7 +102,14 @@ namespace Miticax.Logica
             if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2)
                 return ResultadoOperacion.Fail("GanadorRonda invalido: debe coincidir con IdJugador1 o IdJugador2");
 
-            // NUEVO: evitar duplicados (IdBatalla, IdRonda)
+            // NUEVO: verificar existencia de participantes
+            var j1 = _jugadorDatos.FindById(ronda.IdJugador1);
+            if (j1 == null) return ResultadoOperacion.Fail("IdJugador1 no existe (Id=" + ronda.IdJugador1 + ")");
+
+            var j2 = _jugadorDatos.FindById(ronda.IdJugador2);
+            if (j2 == null) return ResultadoOperacion.Fail("IdJugador2 no existe (Id=" + ronda.IdJugador2 + ")");
+
+            // Unicidad (IdBatalla, IdRonda)
             var existente = _rondaDatos.FindByBatallaAndRonda(ronda.IdBatalla, ronda.IdRonda);
             if (existente != null)
                 return ResultadoOperacion.Fail("Ya existe una ronda " + ronda.IdRonda + " para la batalla " + ronda.IdBatalla);
@@ -104,7 +118,7 @@ namespace Miticax.Logica
             bool ok = _rondaDatos.Insert(ronda, out errorDatos);
             if (!ok) return ResultadoOperacion.Fail(errorDatos);
 
-            // Recompensas por ronda (ya validado ganador)
+            // Recompensas por ronda (ahora con jugadores garantizados existentes)
             var ganador = _jugadorDatos.FindById(ronda.GanadorRonda);
             if (ganador != null) ganador.Cristales += 10;
 
