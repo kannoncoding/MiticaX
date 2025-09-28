@@ -6,14 +6,16 @@
 
 using System;
 using System.Windows.Forms;
-using Miticax.Entidades;
-using Miticax.Logica;
-using Miticax.Datos;
 
 namespace Miticax.Presentacion
 {
     public class FrmInventario : Form
     {
+        // Instancias de capa Datos via helper (evita CS0120)
+        private readonly Miticax.Datos.JugadorDatos _jugadorDatos = UiServiciosHelper.JugadorDatos();
+        private readonly Miticax.Datos.CriaturaDatos _criaturaDatos = UiServiciosHelper.CriaturaDatos();
+        private readonly Miticax.Datos.InventarioDatos _inventarioDatos = UiServiciosHelper.InventarioDatos();
+
         private Label lblJugador; private ComboBox cboJugador;
         private Label lblCriatura; private ComboBox cboCriatura;
         private Button btnComprar; private Button btnCerrar;
@@ -66,8 +68,8 @@ namespace Miticax.Presentacion
         {
             try
             {
-                // Cargar jugadores
-                var jugadores = JugadorDatos.GetAllSnapshot();
+                // Jugadores
+                var jugadores = _jugadorDatos.GetAllSnapshot();
                 cboJugador.Items.Clear();
                 for (int i = 0; i < jugadores.Length; i++)
                 {
@@ -75,7 +77,7 @@ namespace Miticax.Presentacion
                     cboJugador.Items.Add(jugadores[i].IdJugador + " - " + jugadores[i].Nombre);
                 }
 
-                // Cargar criaturas (catalogo)
+                // Criaturas del catalogo
                 var criaturas = _criaturaDatos.GetAllSnapshot();
                 cboCriatura.Items.Clear();
                 for (int i = 0; i < criaturas.Length; i++)
@@ -103,12 +105,41 @@ namespace Miticax.Presentacion
                 int idJugador = ParseLeadingInt(cboJugador.SelectedItem.ToString());
                 int idCriatura = ParseLeadingInt(cboCriatura.SelectedItem.ToString());
 
-                string error;
-                var r = InventarioService.ComprarCriatura(idJugador, idCriatura, out error);
-                if (!r.Exito)
+                // Invocar InventarioService.ComprarCriatura por reflexion (soporta firmas comunes)
+                bool exito = false;
+                string msg = null;
+
+                var t = Type.GetType("Miticax.Logica.InventarioService, Miticax.Logica");
+                object ro = null;
+                if (t != null)
                 {
-                    // Mensaje exacto para falta de cristales si aplica
-                    MessageBox.Show(r.Mensaje, "Operacion", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // Preferido: ComprarCriatura(int,int,out string)
+                    var m1 = t.GetMethod("ComprarCriatura", new Type[] { typeof(int), typeof(int), typeof(string).MakeByRefType() });
+                    if (m1 != null)
+                    {
+                        object[] pars = new object[] { idJugador, idCriatura, null };
+                        ro = m1.Invoke(null, pars);
+                        msg = UiServiciosHelper.ExtraerMensaje(ro) ?? (pars[2] as string);
+                    }
+                    else
+                    {
+                        // Alternativa: ComprarCriatura(int,int)
+                        var m2 = t.GetMethod("ComprarCriatura", new Type[] { typeof(int), typeof(int) });
+                        if (m2 != null) ro = m2.Invoke(null, new object[] { idJugador, idCriatura });
+                    }
+                }
+
+                if (ro != null)
+                {
+                    var pEx = ro.GetType().GetProperty("Exito");
+                    if (pEx != null) exito = (bool)(pEx.GetValue(ro) ?? false);
+                    msg = UiServiciosHelper.ExtraerMensaje(ro) ?? msg;
+                }
+
+                if (!exito)
+                {
+                    // Mensaje exacto si lo provee la capa logica (incluye el de cristales insuficientes)
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Operacion", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
@@ -123,6 +154,7 @@ namespace Miticax.Presentacion
             }
             catch (IndexOutOfRangeException)
             {
+                // Limite de arreglo alcanzado
                 MessageBox.Show("No se pueden ingresar mas registros", "Limite", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -133,7 +165,7 @@ namespace Miticax.Presentacion
 
         private int ParseLeadingInt(string s)
         {
-            // parsea la parte inicial antes de " - "
+            // Obtiene el entero al inicio (antes de " - ")
             int guion = s.IndexOf(" - ");
             string num = guion > 0 ? s.Substring(0, guion) : s;
             int val; if (int.TryParse(num, out val)) return val;
@@ -144,7 +176,7 @@ namespace Miticax.Presentacion
         {
             try
             {
-                var inv = InventarioDatos.GetAllSnapshot();
+                var inv = _inventarioDatos.GetAllSnapshot();
                 grid.DataSource = inv;
             }
             catch (Exception ex)
