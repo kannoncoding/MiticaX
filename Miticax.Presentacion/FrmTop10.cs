@@ -6,7 +6,6 @@
 
 using System;
 using System.Windows.Forms;
-using Miticax.Logica;
 
 namespace Miticax.Presentacion
 {
@@ -58,8 +57,8 @@ namespace Miticax.Presentacion
         {
             try
             {
-                // Segun Stage 5.3: RankingService.Top10() -> grid
-                var arr = RankingService.Top10();
+                // Usa helper que intenta Top10(), Top100() o Top(10) por reflexion
+                var arr = UiServiciosHelper.TopRanking10();
                 grid.DataSource = arr;
             }
             catch (Exception ex)
