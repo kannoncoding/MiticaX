@@ -59,7 +59,9 @@ namespace Miticax.Logica
             // Estudiante [300,600)
             // Avanzado [600,1200)
             // Maestro >=1200
-            if (nivel == 1) return costo < 100;
+            if (costo < 0) return false; // regla general: nunca costos negativos
+
+            if (nivel == 1) return costo >= 0 && costo < 100;
             if (nivel == 2) return costo >= 100 && costo < 300;
             if (nivel == 3) return costo >= 300 && costo < 600;
             if (nivel == 4) return costo >= 600 && costo < 1200;
