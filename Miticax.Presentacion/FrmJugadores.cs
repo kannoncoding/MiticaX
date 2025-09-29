@@ -89,7 +89,7 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                var ent = new JugadorEntidad
+                var ent = new Miticax.Entidades.JugadorEntidad
                 {
                     IdJugador = id,
                     Nombre = txtNombre.Text.Trim(),
@@ -98,16 +98,20 @@ namespace Miticax.Presentacion
 
                 var srv = UiServiciosHelper.JugadorService();
                 string error;
-                var resultado = srv.RegistrarJugador(ent, ent.FechaNacimiento, out error); // <- FUERTE
+                var resultado = srv.RegistrarJugador(ent, ent.FechaNacimiento, out error);
 
-                if (!resultado.Exito)
+                bool exito = resultado.Exito;
+                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? error;
+
+                if (!exito)
                 {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
-                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El registro se ha ingresado correctamente", "Exito",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 txtId.Clear(); txtNombre.Clear(); dtpFecha.Value = DateTime.Today;
                 txtId.Focus();
@@ -119,9 +123,11 @@ namespace Miticax.Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ocurrio un error al registrar el jugador.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Ocurrio un error al registrar el jugador.\n" + ex.Message, "Error",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
 
 

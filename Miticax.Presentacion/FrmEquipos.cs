@@ -138,7 +138,8 @@ namespace Miticax.Presentacion
             {
                 if (cboJugador.SelectedIndex < 0 || cboC1.SelectedIndex < 0 || cboC2.SelectedIndex < 0 || cboC3.SelectedIndex < 0)
                 {
-                    MessageBox.Show("Debe seleccionar jugador y 3 criaturas.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Debe seleccionar jugador y 3 criaturas.", "Validacion",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -147,7 +148,7 @@ namespace Miticax.Presentacion
                 int c2 = ParseLeadingInt(cboC2.SelectedItem.ToString());
                 int c3 = ParseLeadingInt(cboC3.SelectedItem.ToString());
 
-                var ent = new EquipoEntidad
+                var ent = new Miticax.Entidades.EquipoEntidad
                 {
                     IdJugador = idJugador,
                     IdCriatura1 = c1,
@@ -157,16 +158,20 @@ namespace Miticax.Presentacion
 
                 var srv = UiServiciosHelper.EquipoService();
                 string error;
-                var resultado = srv.RegistrarEquipo(ent, out error); // <- FUERTE
+                var resultado = srv.RegistrarEquipo(ent, out error);
 
-                if (!resultado.Exito)
+                bool exito = resultado.Exito;
+                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? error;
+
+                if (!exito)
                 {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
-                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El registro se ha ingresado correctamente", "Exito",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 cboJugador.SelectedIndex = -1; cboC1.SelectedIndex = -1; cboC2.SelectedIndex = -1; cboC3.SelectedIndex = -1;
                 cboJugador.Focus();
@@ -178,9 +183,11 @@ namespace Miticax.Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al registrar equipo.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error al registrar equipo.\n" + ex.Message, "Error",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
 
         private int ParseLeadingInt(string s)

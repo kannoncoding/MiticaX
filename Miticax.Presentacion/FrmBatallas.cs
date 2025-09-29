@@ -135,7 +135,8 @@ namespace Miticax.Presentacion
             {
                 if (cboJ1.SelectedIndex < 0 || cboE1.SelectedIndex < 0 || cboJ2.SelectedIndex < 0 || cboE2.SelectedIndex < 0)
                 {
-                    MessageBox.Show("Debe seleccionar jugadores y equipos.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Debe seleccionar jugadores y equipos.", "Validacion",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -144,18 +145,30 @@ namespace Miticax.Presentacion
                 int j2 = ParseLeadingInt(cboJ2.SelectedItem.ToString());
                 int e2 = ParseLeadingInt(cboE2.SelectedItem.ToString());
 
+                var ent = new Miticax.Entidades.BatallaEntidad
+                {
+                    IdJugador1 = j1,
+                    IdEquipo1 = e1,
+                    IdJugador2 = j2,
+                    IdEquipo2 = e2
+                };
+
                 var srv = UiServiciosHelper.BatallaService();
                 string error;
-                var resultado = srv.RegistrarBatalla(j1, e1, j2, e2, out error); // <- FUERTE (usa la sobrecarga de ints)
+                var resultado = srv.RegistrarBatalla(ent, out error); // <- ENTIDAD
 
-                if (!resultado.Exito)
+                bool exito = resultado.Exito;
+                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? error;
+
+                if (!exito)
                 {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
-                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El registro se ha ingresado correctamente", "Exito",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Refrescar();
             }
             catch (IndexOutOfRangeException)
@@ -164,7 +177,8 @@ namespace Miticax.Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al registrar batalla.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error al registrar batalla.\n" + ex.Message, "Error",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -175,23 +189,31 @@ namespace Miticax.Presentacion
                 int idBatalla = UiServiciosHelper.UltimoIdBatalla();
                 var srv = UiServiciosHelper.BatallaService();
                 string error;
-                var resultado = srv.EjecutarBatalla(idBatalla, out error); // <- FUERTE (int, out string)
 
-                if (!resultado.Exito)
+                // firma real: EjecutarBatalla(int, Random, out string)
+                var resultado = srv.EjecutarBatalla(idBatalla, new Random(), out error);
+
+                bool exito = resultado.Exito;
+                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? error;
+
+                if (!exito)
                 {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
-                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El registro se ha ingresado correctamente", "Exito",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Refrescar();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al ejecutar batalla.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error al ejecutar batalla.\n" + ex.Message, "Error",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         private int ParseLeadingInt(string s)
         {

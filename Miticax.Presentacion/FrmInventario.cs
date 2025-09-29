@@ -98,7 +98,8 @@ namespace Miticax.Presentacion
             {
                 if (cboJugador.SelectedIndex < 0 || cboCriatura.SelectedIndex < 0)
                 {
-                    MessageBox.Show("Debe seleccionar jugador y criatura.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Debe seleccionar jugador y criatura.", "Validacion",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -107,16 +108,20 @@ namespace Miticax.Presentacion
 
                 var srv = UiServiciosHelper.InventarioService();
                 string error;
-                var resultado = srv.ComprarCriatura(idJugador, idCriatura, out error); // <- FUERTE
+                var resultado = srv.ComprarCriatura(idJugador, idCriatura, out error);
 
-                if (!resultado.Exito)
+                bool exito = resultado.Exito;
+                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? error;
+
+                if (!exito)
                 {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
-                                    "Operacion", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Operacion",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
-                MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El registro se ha ingresado correctamente", "Exito",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 cboJugador.SelectedIndex = -1; cboCriatura.SelectedIndex = -1;
                 cboJugador.Focus();
@@ -128,9 +133,11 @@ namespace Miticax.Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ocurrio un error al comprar la criatura.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Ocurrio un error al comprar la criatura.\n" + ex.Message, "Error",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
 
         private int ParseLeadingInt(string s)

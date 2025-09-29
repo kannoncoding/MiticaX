@@ -118,7 +118,7 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                
+                // ajusta esta linea si tu costo es NumericUpDown
                 int costo;
                 if (!int.TryParse(txtCosto.Text.Trim(), out costo) || costo < 0)
                 {
@@ -126,7 +126,7 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                var ent = new CriaturaEntidad
+                var ent = new Miticax.Entidades.CriaturaEntidad
                 {
                     IdCriatura = id,
                     Nombre = txtNombre.Text.Trim(),
@@ -137,16 +137,20 @@ namespace Miticax.Presentacion
 
                 var srv = UiServiciosHelper.CriaturaService();
                 string error;
-                var resultado = srv.RegistrarCriatura(ent, out error); // <- FUERTE
+                var resultado = srv.RegistrarCriatura(ent, out error);
 
-                if (!resultado.Exito)
+                bool exito = resultado.Exito;
+                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? error;
+
+                if (!exito)
                 {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
-                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El registro se ha ingresado correctamente", "Exito",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 txtId.Clear(); txtNombre.Clear(); txtCosto.Clear();
                 nudPoder.Value = nudPoder.Minimum; nudResistencia.Value = nudResistencia.Minimum;
@@ -159,9 +163,11 @@ namespace Miticax.Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ocurrio un error al registrar la criatura.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Ocurrio un error al registrar la criatura.\n" + ex.Message, "Error",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         // ---- helpers locales para costo ----
         private int LeerCostoDesdeUi()

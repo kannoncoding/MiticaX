@@ -57,14 +57,15 @@ namespace Miticax.Presentacion
         {
             try
             {
-                var srv = UiServiciosHelper.RankingService();
-                var arr = srv.Top10(); // <- FUERTE
+                var arr = UiServiciosHelper.RankingService().Top10();
                 grid.DataSource = arr;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al cargar Top 10.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error al cargar Top 10.\n" + ex.Message, "Error",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
     }
 }
