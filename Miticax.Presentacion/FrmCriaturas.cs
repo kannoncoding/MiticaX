@@ -116,8 +116,10 @@ namespace Miticax.Presentacion
                     MessageBox.Show("El nombre es requerido.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
-                int costo;
-                if (!int.TryParse(txtCosto.Text.Trim(), out costo) || costo < 0)
+
+                // Leer costo desde txtCosto o nudCosto (el que exista)
+                int costo = LeerCostoDesdeUi();
+                if (costo < 0)
                 {
                     MessageBox.Show("Costo invalido.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
@@ -136,9 +138,8 @@ namespace Miticax.Presentacion
                 object resultado = null;
                 string errorOut = null;
 
-                // 1) RegistrarCriatura(CriaturaEntidad, out string)
                 var m = t.GetMethod("RegistrarCriatura", new Type[] { typeof(Miticax.Entidades.CriaturaEntidad), typeof(string).MakeByRefType() })
-                     ?? t.GetMethod("Registrar", new Type[] { typeof(Miticax.Entidades.CriaturaEntidad), typeof(string).MakeByRefType() });
+                      ?? t.GetMethod("Registrar", new Type[] { typeof(Miticax.Entidades.CriaturaEntidad), typeof(string).MakeByRefType() });
 
                 if (m != null)
                 {
@@ -159,8 +160,10 @@ namespace Miticax.Presentacion
                 MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 // limpiar y refrescar
-                txtId.Clear(); txtNombre.Clear(); txtCosto.Clear();
-                nudPoder.Value = nudPoder.Minimum; nudResistencia.Value = nudResistencia.Minimum;
+                txtId.Clear(); txtNombre.Clear();
+                LimpiarCostoEnUi();
+                nudPoder.Value = nudPoder.Minimum;
+                nudResistencia.Value = nudResistencia.Minimum;
                 txtId.Focus();
                 RefrescarGrid();
             }
@@ -171,6 +174,47 @@ namespace Miticax.Presentacion
             catch (Exception ex)
             {
                 MessageBox.Show("Ocurrio un error al registrar la criatura.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ---- helpers locales para costo ----
+        private int LeerCostoDesdeUi()
+        {
+            // 1) buscar TextBox llamado "txtCosto"
+            var arr = this.Controls.Find("txtCosto", true); // busca en anidados
+            for (int i = 0; i < arr.Length; i++)
+            {
+                var tb = arr[i] as TextBox;
+                if (tb != null)
+                {
+                    int c;
+                    if (int.TryParse(tb.Text.Trim(), out c) && c >= 0) return c;
+                    return -1;
+                }
+            }
+            // 2) buscar NumericUpDown llamado "nudCosto"
+            arr = this.Controls.Find("nudCosto", true);
+            for (int i = 0; i < arr.Length; i++)
+            {
+                var nud = arr[i] as NumericUpDown;
+                if (nud != null) return (int)nud.Value;
+            }
+            return -1; // no hay control de costo
+        }
+
+        private void LimpiarCostoEnUi()
+        {
+            var arr = this.Controls.Find("txtCosto", true);
+            for (int i = 0; i < arr.Length; i++)
+            {
+                var tb = arr[i] as TextBox;
+                if (tb != null) tb.Clear();
+            }
+            arr = this.Controls.Find("nudCosto", true);
+            for (int i = 0; i < arr.Length; i++)
+            {
+                var nud = arr[i] as NumericUpDown;
+                if (nud != null) nud.Value = nud.Minimum;
             }
         }
 

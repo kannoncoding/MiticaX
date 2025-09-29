@@ -262,7 +262,7 @@ namespace Miticax.Presentacion
         }
 
         // ---- Extraer Exito/Mensaje de ResultadoOperacion via reflexion ----
-        private static bool ExtraerExito(object ro)
+        internal static bool ExtraerExito(object ro)
         {
             if (ro == null) return false;
             var p = ro.GetType().GetProperty("Exito") ?? ro.GetType().GetProperty("Success");
