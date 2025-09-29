@@ -37,33 +37,48 @@ namespace Miticax.Presentacion
             StartPosition = FormStartPosition.CenterParent;
 
             // Crear controles de entrada
+            // ----- Fila 1 (Top = 20): Id, Nombre, Tipo -----
             lblId = new Label() { Text = "IdCriatura:", Left = 20, Top = 20, Width = 100 };
-            txtId = new TextBox() { Left = 130, Top = 16, Width = 120, TabIndex = 0 };
+            txtId = new TextBox() { Left = 120, Top = 20, Width = 120, TabIndex = 0 };
 
-            lblNombre = new Label() { Text = "Nombre:", Left = 270, Top = 20, Width = 100 };
-            txtNombre = new TextBox() { Left = 340, Top = 16, Width = 160, TabIndex = 1 };
+            lblNombre = new Label() { Text = "Nombre:", Left = 260, Top = 20, Width = 80 };
+            txtNombre = new TextBox() { Left = 340, Top = 20, Width = 160, TabIndex = 1 };
 
             lblTipo = new Label() { Text = "Tipo:", Left = 520, Top = 20, Width = 60 };
-            cboTipo = new ComboBox() { Left = 560, Top = 16, Width = 140, DropDownStyle = ComboBoxStyle.DropDownList, TabIndex = 2 };
+            cboTipo = new ComboBox()
+            {
+                Left = 560,
+                Top = 20,
+                Width = 140,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                TabIndex = 2
+            };
             cboTipo.Items.AddRange(new object[] { "agua", "tierra", "aire", "fuego" });
 
-            lblNivel = new Label() { Text = "Nivel:", Left = 20, Top = 60, Width = 100 };
-            cboNivel = new ComboBox() { Left = 130, Top = 56, Width = 160, DropDownStyle = ComboBoxStyle.DropDownList, TabIndex = 3 };
-            cboNivel.Items.AddRange(new object[]{
-                "01-Iniciado","02-Aprendiz","03-Estudiante","04-Avanzado","05-Maestro"
-            });
+            // ----- Fila 2 (Top = 56/60): Nivel, Poder, Resistencia, Costo -----
+            lblNivel = new Label() { Text = "Nivel:", Left = 20, Top = 60, Width = 60 };
+            cboNivel = new ComboBox()
+            {
+                Left = 90,
+                Top = 60,
+                Width = 160,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                TabIndex = 3
+            };
+            cboNivel.Items.AddRange(new object[] { "01-Iniciado", "02-Aprendiz", "03-Estudiante", "04-Avanzado", "05-Maestro" });
 
-            lblPoder = new Label() { Text = "Poder:", Left = 310, Top = 60, Width = 60 };
-            nudPoder = new NumericUpDown() { Left = 360, Top = 56, Width = 80, Minimum = 0, Maximum = 100000, TabIndex = 4 };
+            lblPoder = new Label() { Text = "Poder:", Left = 270, Top = 60, Width = 60 };
+            nudPoder = new NumericUpDown() { Left = 330, Top = 60, Width = 80, Minimum = 0, Maximum = 100000, TabIndex = 4 };
 
-            lblResistencia = new Label() { Text = "Resistencia:", Left = 460, Top = 60, Width = 90 };
-            nudResistencia = new NumericUpDown() { Left = 550, Top = 56, Width = 80, Minimum = 0, Maximum = 100000, TabIndex = 5 };
+            lblResistencia = new Label() { Text = "Resistencia:", Left = 430, Top = 60, Width = 90 };
+            nudResistencia = new NumericUpDown() { Left = 525, Top = 60, Width = 80, Minimum = 0, Maximum = 100000, TabIndex = 5 };
 
-            lblCosto = new Label() { Text = "Costo (Cristales):", Left = 650, Top = 60, Width = 120 };
-            nudCosto = new NumericUpDown() { Left = 770, Top = 56, Width = 80, Minimum = 0, Maximum = 1000000, TabIndex = 6 };
+            lblCosto = new Label() { Text = "Costo (Cristales):", Left = 620, Top = 60, Width = 120 };
+            nudCosto = new NumericUpDown() { Left = 745, Top = 60, Width = 80, Minimum = 0, Maximum = 1000000, TabIndex = 6 };
 
-            btnAgregar = new Button() { Text = "Agregar", Left = 560, Top = 100, Width = 120, TabIndex = 7 };
-            btnCerrar = new Button() { Text = "Cerrar", Left = 690, Top = 100, Width = 120, TabIndex = 8 };
+            // ----- Botones (misma fila 2, a la derecha) -----
+            btnAgregar = new Button() { Text = "Agregar", Left = 840, Top = 58, Width = 100, TabIndex = 7 };
+            btnCerrar = new Button() { Text = "Cerrar", Left = 945, Top = 58, Width = 100, TabIndex = 8 };
 
             AcceptButton = btnAgregar;
             CancelButton = btnCerrar;
@@ -72,16 +87,25 @@ namespace Miticax.Presentacion
             btnCerrar.Click += (s, e) => Close();
 
             // DataGridView
-            grid = new DataGridView();
-            grid.Left = 20;
-            grid.Top = 150;
-            grid.Width = 830;
-            grid.Height = 380;
-            grid.ReadOnly = true;
-            grid.AllowUserToAddRows = false;
-            grid.AllowUserToDeleteRows = false;
-            grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            grid.AutoGenerateColumns = false;
+            grid = new DataGridView
+            {
+                Left = 20,
+                Top = 100,
+                Width = 1025,
+                Height = 420,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                AutoGenerateColumns = false
+            };
+
+            // asegurar anclaje arriba-izquierda para todos
+            lblId.Anchor = txtId.Anchor = lblNombre.Anchor = txtNombre.Anchor =
+            lblTipo.Anchor = cboTipo.Anchor = lblNivel.Anchor = cboNivel.Anchor =
+            lblPoder.Anchor = nudPoder.Anchor = lblResistencia.Anchor = nudResistencia.Anchor =
+            lblCosto.Anchor = nudCosto.Anchor = btnAgregar.Anchor = btnCerrar.Anchor =
+            AnchorStyles.Top | AnchorStyles.Left;
 
             // Columnas manuales
             grid.Columns.Add(new DataGridViewTextBoxColumn() { HeaderText = "Id", DataPropertyName = "IdCriatura", Width = 60 });

@@ -27,26 +27,50 @@ namespace Miticax.Presentacion
             Width = 820;
             Height = 540;
 
-            lblJugador = new Label() { Text = "Jugador:", Left = 20, Top = 20, Width = 80 };
-            cboJugador = new ComboBox() { Left = 90, Top = 16, Width = 240, DropDownStyle = ComboBoxStyle.DropDownList, TabIndex = 0 };
+            // fila superior alineada
+            lblJugador = new Label() { Text = "Jugador:", Left = 20, Top = 20, Width = 70 };
+            cboJugador = new ComboBox()
+            {
+                Left = 90,
+                Top = 20,
+                Width = 220,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                TabIndex = 0
+            };
 
-            lblCriatura = new Label() { Text = "Criatura:", Left = 360, Top = 20, Width = 80 };
-            cboCriatura = new ComboBox() { Left = 430, Top = 16, Width = 240, DropDownStyle = ComboBoxStyle.DropDownList, TabIndex = 1 };
+            lblCriatura = new Label() { Text = "Criatura:", Left = 330, Top = 20, Width = 70 };
+            cboCriatura = new ComboBox()
+            {
+                Left = 400,
+                Top = 20,
+                Width = 220,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                TabIndex = 1
+            };
 
-            btnComprar = new Button() { Text = "Comprar", Left = 680, Top = 15, Width = 100, TabIndex = 2 };
-            btnCerrar = new Button() { Text = "Cerrar", Left = 680, Top = 50, Width = 100, TabIndex = 3 };
+
+            // botones a la derecha (justo en 820 px)
+            btnComprar = new Button() { Text = "Comprar", Left = 630, Top = 18, Width = 90, TabIndex = 2 };
+            btnCerrar = new Button() { Text = "Cerrar", Left = 725, Top = 18, Width = 90, TabIndex = 3 };
+
 
             AcceptButton = btnComprar;
             CancelButton = btnCerrar;
+
+            // asegura anclaje arriba-izquierda
+            lblJugador.Anchor = cboJugador.Anchor =
+            lblCriatura.Anchor = cboCriatura.Anchor =
+            btnComprar.Anchor = btnCerrar.Anchor = AnchorStyles.Top | AnchorStyles.Left;
 
             btnComprar.Click += BtnComprar_Click;
             btnCerrar.Click += (s, e) => Close();
 
             grid = new DataGridView();
             grid.Left = 20;
-            grid.Top = 100;
-            grid.Width = 760;
+            grid.Top = 60;
+            grid.Width = 780;   // 820 - 2*20
             grid.Height = 380;
+            grid.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             grid.ReadOnly = true;
             grid.AllowUserToAddRows = false;
             grid.AllowUserToDeleteRows = false;
