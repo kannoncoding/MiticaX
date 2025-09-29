@@ -69,7 +69,7 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                // Tomamos todas las rondas y filtramos por IdBatalla (sin LINQ)
+                //todas las rondas y filtra por IdBatalla (sin LINQ)
                 var todas = _rondaDatos.GetAllSnapshot();
                 var filtradas = UiServiciosHelper.FiltrarPorCampoIgual(todas, "IdBatalla", id);
                 grid.DataSource = filtradas;

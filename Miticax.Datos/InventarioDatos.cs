@@ -15,7 +15,7 @@ namespace Miticax.Datos
         private readonly InventarioJugadorEntidad[,] _items =
             new InventarioJugadorEntidad[ConstantesDatos.CapacidadJugadores, ConstantesDatos.CapacidadInventarioPorJugador];
 
-        // Mapeo interno: para cada fila (0..CapacidadJugadores-1) guardamos el IdJugador asignado a esa fila.
+        // Mapeo interno: para cada fila (0..CapacidadJugadores-1) guarda el IdJugador asignado a esa fila.
         // Valor -1 significa "fila libre/no asignada".
         private readonly int[] _jugadorIdPorFila = InicializarJugadorIdPorFila();
 

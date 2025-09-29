@@ -68,11 +68,6 @@ namespace Miticax.Logica
         }
 
         // Ejecuta una batalla (mejor de 3) y actualiza ganador, jugadores y rondas.
-        //UNED
-        //Mitica X
-        //Jorge Arias Melendez
-        //Septiembre 2025
-        //Ejecucion de batalla: validar ganador antes de mutar estado o otorgar recompensas
 
         public ResultadoOperacion EjecutarBatalla(int idBatalla, Random rng, out string error)
         {
@@ -254,7 +249,7 @@ namespace Miticax.Logica
                 }
             }
 
-            // Como fallback (no deberia pasar), devolver la primera
+            // Como fallback devolver la primera
             return ids[0];
         }
 

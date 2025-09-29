@@ -16,7 +16,7 @@ namespace Miticax.Datos
         // Contador de elementos realmente ocupados en el arreglo.
         private int _count = 0;
 
-        // Inserta una criatura si hay espacio. No valida reglas de negocio (eso es de la capa Logica).
+        // Inserta una criatura si hay espacio.
         public bool Insert(CriaturaEntidad item, out string error)
         {
             // Verifica espacio disponible comparando _count con la capacidad del arreglo.

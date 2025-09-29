@@ -236,8 +236,7 @@ namespace Miticax.Logica
         // Registra una ronda y otorga +10 cristales al ganador y +5 poder a la criatura ganadora en inventario.
         public ResultadoOperacion RegistrarRondaYRecompensasLegacy(RondaEntidad ronda, int poderGanadorIncremento, out string errorDatos)
         {
-            // Este metodo solo se conserva si tenias dependencias antiguas.
-            // Recomendado usar RegistrarRonda + AplicarRecompensasRonda de manera transaccional.
+          
             return RegistrarRondaYRecompensas(ronda, poderGanadorIncremento, out errorDatos);
         }
 

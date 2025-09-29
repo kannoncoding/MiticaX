@@ -10,7 +10,7 @@ using Miticax.Entidades;
 namespace Miticax.Datos
 {
     // Clase de datos de batallas con almacenamiento por INSTANCIA.
-    // Importante: _items y _count ya NO son static; cada instancia es independiente (aislamiento para pruebas).
+    // _items y _count NO son static; cada instancia es independiente
     public class BatallaDatos
     {
         // Arreglo fisico donde se almacenan las batallas de ESTA instancia.
@@ -27,10 +27,10 @@ namespace Miticax.Datos
             _count = 0; // inicia sin elementos
         }
 
-        // Constructor alterno: permite especificar capacidad explicita (util para pruebas).
+        // Constructor alterno: permite especificar capacidad explicita
         public BatallaDatos(int capacidad)
         {
-            // Si pasan un valor no valido, aseguramos al menos 1 para evitar excepciones.
+            // Si pasan un valor no valido, asegura al menos 1 para evitar excepciones.
             if (capacidad < 1) capacidad = 1;
             _items = new BatallaEntidad[capacidad];
             _count = 0;

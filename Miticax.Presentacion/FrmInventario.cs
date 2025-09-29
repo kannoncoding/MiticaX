@@ -11,7 +11,7 @@ namespace Miticax.Presentacion
 {
     public class FrmInventario : Form
     {
-        // Instancias de capa Datos via helper (evita CS0120)
+        // Instancias de capa Datos via helper
         private readonly Miticax.Datos.JugadorDatos _jugadorDatos = UiServiciosHelper.JugadorDatos();
         private readonly Miticax.Datos.CriaturaDatos _criaturaDatos = UiServiciosHelper.CriaturaDatos();
         private readonly Miticax.Datos.InventarioDatos _inventarioDatos = UiServiciosHelper.InventarioDatos();
@@ -49,7 +49,7 @@ namespace Miticax.Presentacion
             };
 
 
-            // botones a la derecha (justo en 820 px)
+            // botones a la derecha (820 px)
             btnComprar = new Button() { Text = "Comprar", Left = 630, Top = 18, Width = 90, TabIndex = 2 };
             btnCerrar = new Button() { Text = "Cerrar", Left = 725, Top = 18, Width = 90, TabIndex = 3 };
 

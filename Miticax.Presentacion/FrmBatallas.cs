@@ -11,7 +11,7 @@ namespace Miticax.Presentacion
 {
     public class FrmBatallas : Form
     {
-        // Instancias de Datos (evita CS0120 en metodos de instancia)
+        // Instancias de Datos
         private readonly Miticax.Datos.JugadorDatos _jugadorDatos = UiServiciosHelper.JugadorDatos();
         private readonly Miticax.Datos.EquipoDatos _equipoDatos = UiServiciosHelper.EquipoDatos();
         private readonly Miticax.Datos.BatallaDatos _batallaDatos = UiServiciosHelper.BatallaDatos();

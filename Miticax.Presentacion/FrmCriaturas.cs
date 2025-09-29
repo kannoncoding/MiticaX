@@ -13,7 +13,7 @@ namespace Miticax.Presentacion
 {
     public class FrmCriaturas : Form
     {
-        // Instancia de datos via helper (evita CS0120 si los metodos no son estaticos)
+        // Instancia de datos via helper
         private readonly Miticax.Datos.CriaturaDatos _criaturaDatos = UiServiciosHelper.CriaturaDatos();
 
         // Controles
@@ -37,7 +37,7 @@ namespace Miticax.Presentacion
             StartPosition = FormStartPosition.CenterParent;
 
             // Crear controles de entrada
-            // ----- Fila 1 (Top = 20): Id, Nombre, Tipo -----
+            // ----- Fila 1: Id, Nombre, Tipo -----
             lblId = new Label() { Text = "IdCriatura:", Left = 20, Top = 20, Width = 100 };
             txtId = new TextBox() { Left = 120, Top = 20, Width = 120, TabIndex = 0 };
 
@@ -55,7 +55,7 @@ namespace Miticax.Presentacion
             };
             cboTipo.Items.AddRange(new object[] { "agua", "tierra", "aire", "fuego" });
 
-            // ----- Fila 2 (Top = 56/60): Nivel, Poder, Resistencia, Costo -----
+            // ----- Fila 2: Nivel, Poder, Resistencia, Costo -----
             lblNivel = new Label() { Text = "Nivel:", Left = 20, Top = 60, Width = 60 };
             cboNivel = new ComboBox()
             {
@@ -298,7 +298,7 @@ namespace Miticax.Presentacion
                 var fila = new CriaturaGridFila();
                 fila.IdCriatura = c.IdCriatura;
                 fila.Nombre = c.Nombre;
-                fila.TipoTexto = c.Tipo; // si luego tienes una descripcion distinta, cambia aqui
+                fila.TipoTexto = c.Tipo;
                 fila.NivelTexto = NivelATexto(c.Nivel);
                 fila.Poder = c.Poder;
                 fila.Resistencia = c.Resistencia;

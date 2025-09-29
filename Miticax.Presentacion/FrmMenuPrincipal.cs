@@ -33,7 +33,7 @@ namespace Miticax.Presentacion
 
             FormBorderStyle = FormBorderStyle.FixedDialog; // evita resize
             MaximizeBox = false; MinimizeBox = false;      // limpia la UI
-            KeyPreview = true;                             // permitir Esc para cerrar si lo deseas
+            KeyPreview = true;                             // permitir Esc para cerrar
             KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) Close(); };
 
 
@@ -93,7 +93,7 @@ namespace Miticax.Presentacion
 
         private void Abrir(Form frm)
         {
-            // Abrir como dialogo modal, con try/catch para robustez
+            // Abrir como dialogo modal, con try/catch
             try
             {
                 frm.StartPosition = FormStartPosition.CenterParent;
