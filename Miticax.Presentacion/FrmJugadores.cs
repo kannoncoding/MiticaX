@@ -7,6 +7,7 @@
 using System;
 using System.Windows.Forms;
 using Miticax.Entidades;
+using Miticax.Logica;
 
 namespace Miticax.Presentacion
 {
@@ -88,45 +89,21 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                var ent = new Miticax.Entidades.JugadorEntidad();
-                ent.IdJugador = id;
-                ent.Nombre = txtNombre.Text.Trim();
-                ent.FechaNacimiento = dtpFecha.Value;
+                var ent = new JugadorEntidad
+                {
+                    IdJugador = id,
+                    Nombre = txtNombre.Text.Trim(),
+                    FechaNacimiento = dtpFecha.Value
+                };
 
-                // instancia real del servicio
                 var srv = UiServiciosHelper.JugadorService();
-                var t = srv.GetType();
+                string error;
+                var resultado = srv.RegistrarJugador(ent, ent.FechaNacimiento, out error); // <- FUERTE
 
-                object resultado = null;
-                string errorOut = null;
-
-                // 1) RegistrarJugador(JugadorEntidad, DateTime, out string)
-                var m1 = t.GetMethod("RegistrarJugador", new Type[] { typeof(Miticax.Entidades.JugadorEntidad), typeof(DateTime), typeof(string).MakeByRefType() });
-                if (m1 != null)
+                if (!resultado.Exito)
                 {
-                    object[] pars = new object[] { ent, ent.FechaNacimiento, null };
-                    resultado = m1.Invoke(srv, pars);
-                    errorOut = pars[2] as string;
-                }
-                else
-                {
-                    // 2) RegistrarJugador(JugadorEntidad, out string)
-                    var m2 = t.GetMethod("RegistrarJugador", new Type[] { typeof(Miticax.Entidades.JugadorEntidad), typeof(string).MakeByRefType() })
-                          ?? t.GetMethod("Registrar", new Type[] { typeof(Miticax.Entidades.JugadorEntidad), typeof(string).MakeByRefType() });
-                    if (m2 != null)
-                    {
-                        object[] pars = new object[] { ent, null };
-                        resultado = m2.Invoke(srv, pars);
-                        errorOut = pars[1] as string;
-                    }
-                }
-
-                bool exito = (resultado != null) && UiServiciosHelper.ExtraerExito(resultado);
-                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? errorOut;
-
-                if (!exito)
-                {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 

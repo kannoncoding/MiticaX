@@ -106,37 +106,19 @@ namespace Miticax.Presentacion
                 int idCriatura = ParseLeadingInt(cboCriatura.SelectedItem.ToString());
 
                 var srv = UiServiciosHelper.InventarioService();
-                var t = srv.GetType();
+                string error;
+                var resultado = srv.ComprarCriatura(idJugador, idCriatura, out error); // <- FUERTE
 
-                object resultado = null;
-                string errorOut = null;
-
-                // ComprarCriatura(int,int,out string)
-                var m = t.GetMethod("ComprarCriatura", new Type[] { typeof(int), typeof(int), typeof(string).MakeByRefType() })
-                     ?? t.GetMethod("Comprar", new Type[] { typeof(int), typeof(int), typeof(string).MakeByRefType() });
-
-                if (m != null)
+                if (!resultado.Exito)
                 {
-                    object[] pars = new object[] { idJugador, idCriatura, null };
-                    resultado = m.Invoke(srv, pars);
-                    errorOut = pars[2] as string;
-                }
-
-                bool exito = (resultado != null) && UiServiciosHelper.ExtraerExito(resultado);
-                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? errorOut;
-
-                if (!exito)
-                {
-                    // si la logica envio "No posee la cantidad de cristales..." lo mostramos tal cual
-                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Operacion", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
+                                    "Operacion", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
                 MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // limpiar y refrescar
-                cboJugador.SelectedIndex = -1;
-                cboCriatura.SelectedIndex = -1;
+                cboJugador.SelectedIndex = -1; cboCriatura.SelectedIndex = -1;
                 cboJugador.Focus();
                 RefrescarGrid();
             }

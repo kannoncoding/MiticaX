@@ -57,8 +57,8 @@ namespace Miticax.Presentacion
         {
             try
             {
-                // Usa helper que intenta Top10(), Top100() o Top(10) por reflexion
-                var arr = UiServiciosHelper.TopRanking10();
+                var srv = UiServiciosHelper.RankingService();
+                var arr = srv.Top10(); // <- FUERTE
                 grid.DataSource = arr;
             }
             catch (Exception ex)

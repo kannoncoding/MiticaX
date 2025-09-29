@@ -7,6 +7,7 @@
 using System;
 using System.Windows.Forms;
 using Miticax.Entidades;
+using Miticax.Logica;
 
 namespace Miticax.Presentacion
 {
@@ -117,53 +118,38 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                // Leer costo desde txtCosto o nudCosto (el que exista)
-                int costo = LeerCostoDesdeUi();
-                if (costo < 0)
+                
+                int costo;
+                if (!int.TryParse(txtCosto.Text.Trim(), out costo) || costo < 0)
                 {
                     MessageBox.Show("Costo invalido.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                var ent = new Miticax.Entidades.CriaturaEntidad();
-                ent.IdCriatura = id;
-                ent.Nombre = txtNombre.Text.Trim();
-                ent.Costo = costo;
-                ent.Poder = (int)nudPoder.Value;
-                ent.Resistencia = (int)nudResistencia.Value;
+                var ent = new CriaturaEntidad
+                {
+                    IdCriatura = id,
+                    Nombre = txtNombre.Text.Trim(),
+                    Costo = costo,
+                    Poder = (int)nudPoder.Value,
+                    Resistencia = (int)nudResistencia.Value
+                };
 
                 var srv = UiServiciosHelper.CriaturaService();
-                var t = srv.GetType();
+                string error;
+                var resultado = srv.RegistrarCriatura(ent, out error); // <- FUERTE
 
-                object resultado = null;
-                string errorOut = null;
-
-                var m = t.GetMethod("RegistrarCriatura", new Type[] { typeof(Miticax.Entidades.CriaturaEntidad), typeof(string).MakeByRefType() })
-                      ?? t.GetMethod("Registrar", new Type[] { typeof(Miticax.Entidades.CriaturaEntidad), typeof(string).MakeByRefType() });
-
-                if (m != null)
+                if (!resultado.Exito)
                 {
-                    object[] pars = new object[] { ent, null };
-                    resultado = m.Invoke(srv, pars);
-                    errorOut = pars[1] as string;
-                }
-
-                bool exito = (resultado != null) && UiServiciosHelper.ExtraerExito(resultado);
-                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? errorOut;
-
-                if (!exito)
-                {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
                 MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // limpiar y refrescar
-                txtId.Clear(); txtNombre.Clear();
-                LimpiarCostoEnUi();
-                nudPoder.Value = nudPoder.Minimum;
-                nudResistencia.Value = nudResistencia.Minimum;
+                txtId.Clear(); txtNombre.Clear(); txtCosto.Clear();
+                nudPoder.Value = nudPoder.Minimum; nudResistencia.Value = nudResistencia.Minimum;
                 txtId.Focus();
                 RefrescarGrid();
             }

@@ -4,6 +4,7 @@
 //Septiembre 2025
 //Registro de equipos: jugador + 3 criaturas de su inventario
 
+using Miticax.Entidades;
 using System;
 using System.Windows.Forms;
 
@@ -146,35 +147,22 @@ namespace Miticax.Presentacion
                 int c2 = ParseLeadingInt(cboC2.SelectedItem.ToString());
                 int c3 = ParseLeadingInt(cboC3.SelectedItem.ToString());
 
-                var ent = new Miticax.Entidades.EquipoEntidad();
-                ent.IdJugador = idJugador;
-                ent.IdCriatura1 = c1;
-                ent.IdCriatura2 = c2;
-                ent.IdCriatura3 = c3;
+                var ent = new EquipoEntidad
+                {
+                    IdJugador = idJugador,
+                    IdCriatura1 = c1,
+                    IdCriatura2 = c2,
+                    IdCriatura3 = c3
+                };
 
                 var srv = UiServiciosHelper.EquipoService();
-                var t = srv.GetType();
+                string error;
+                var resultado = srv.RegistrarEquipo(ent, out error); // <- FUERTE
 
-                object resultado = null;
-                string errorOut = null;
-
-                // 1) RegistrarEquipo(EquipoEntidad, out string)
-                var m = t.GetMethod("RegistrarEquipo", new Type[] { typeof(Miticax.Entidades.EquipoEntidad), typeof(string).MakeByRefType() })
-                     ?? t.GetMethod("Registrar", new Type[] { typeof(Miticax.Entidades.EquipoEntidad), typeof(string).MakeByRefType() });
-
-                if (m != null)
+                if (!resultado.Exito)
                 {
-                    object[] pars = new object[] { ent, null };
-                    resultado = m.Invoke(srv, pars);
-                    errorOut = pars[1] as string;
-                }
-
-                bool exito = (resultado != null) && UiServiciosHelper.ExtraerExito(resultado);
-                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? errorOut;
-
-                if (!exito)
-                {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 

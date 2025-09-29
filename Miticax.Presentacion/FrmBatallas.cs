@@ -144,11 +144,14 @@ namespace Miticax.Presentacion
                 int j2 = ParseLeadingInt(cboJ2.SelectedItem.ToString());
                 int e2 = ParseLeadingInt(cboE2.SelectedItem.ToString());
 
-                string msg;
-                bool ok = UiServiciosHelper.TryRegistrarBatalla(j1, e1, j2, e2, out msg);
-                if (!ok)
+                var srv = UiServiciosHelper.BatallaService();
+                string error;
+                var resultado = srv.RegistrarBatalla(j1, e1, j2, e2, out error); // <- FUERTE (usa la sobrecarga de ints)
+
+                if (!resultado.Exito)
                 {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -170,11 +173,14 @@ namespace Miticax.Presentacion
             try
             {
                 int idBatalla = UiServiciosHelper.UltimoIdBatalla();
-                string msg;
-                bool ok = UiServiciosHelper.TryEjecutarBatalla(idBatalla, out msg);
-                if (!ok)
+                var srv = UiServiciosHelper.BatallaService();
+                string error;
+                var resultado = srv.EjecutarBatalla(idBatalla, out error); // <- FUERTE (int, out string)
+
+                if (!resultado.Exito)
                 {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(resultado.Mensaje) ? (error ?? "Operacion no completada") : resultado.Mensaje,
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
