@@ -98,7 +98,7 @@ namespace Miticax.Presentacion
 
                 var srv = UiServiciosHelper.JugadorService();
                 string error;
-                var resultado = srv.RegistrarJugador(ent, ent.FechaNacimiento, out error);
+                var resultado = srv.RegistrarJugador(ent, DateTime.Today, out error);
 
                 bool exito = resultado.Exito;
                 string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? error;
