@@ -118,13 +118,9 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                // ajusta esta linea si tu costo es NumericUpDown
-                int costo;
-                if (!int.TryParse(txtCosto.Text.Trim(), out costo) || costo < 0)
-                {
-                    MessageBox.Show("Costo invalido.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
+                
+                int costo = (int)nudCosto.Value;
+
 
                 var ent = new Miticax.Entidades.CriaturaEntidad
                 {
@@ -152,7 +148,7 @@ namespace Miticax.Presentacion
                 MessageBox.Show("El registro se ha ingresado correctamente", "Exito",
                                 MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                txtId.Clear(); txtNombre.Clear(); txtCosto.Clear();
+                txtId.Clear(); txtNombre.Clear();
                 nudPoder.Value = nudPoder.Minimum; nudResistencia.Value = nudResistencia.Minimum;
                 txtId.Focus();
                 RefrescarGrid();
