@@ -148,8 +148,10 @@ namespace Miticax.Presentacion
                 int c2 = ParseLeadingInt(cboC2.SelectedItem.ToString());
                 int c3 = ParseLeadingInt(cboC3.SelectedItem.ToString());
 
+                // Construye la entidad con IdEquipo positivo
                 var ent = new Miticax.Entidades.EquipoEntidad
                 {
+                    IdEquipo = UiServiciosHelper.SiguienteIdEquipo(), // <- NUEVO
                     IdJugador = idJugador,
                     IdCriatura1 = c1,
                     IdCriatura2 = c2,
@@ -165,8 +167,8 @@ namespace Miticax.Presentacion
 
                 if (!exito)
                 {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error",
-                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg,
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 

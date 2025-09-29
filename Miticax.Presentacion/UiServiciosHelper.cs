@@ -176,6 +176,30 @@ namespace Miticax.Presentacion
             return max;
         }
 
+        internal static int SiguienteIdEquipo()
+        {
+            var arr = EquipoDatos().GetAllSnapshot(); // usa el singleton
+            int max = 0;
+            if (arr != null)
+            {
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    var it = arr[i];
+                    if (it == null) continue;
+                    int id;
+                    // Reutiliza tu helper TryGetIntPropertyValue si ya lo tienes; sino, lee la prop directamente
+                    var p = it.GetType().GetProperty("IdEquipo");
+                    if (p != null)
+                    {
+                        var v = p.GetValue(it);
+                        if (v != null && int.TryParse(v.ToString(), out id))
+                            if (id > max) max = id;
+                    }
+                }
+            }
+            return max + 1;
+        }
+
         internal static bool TryRegistrarBatalla(int j1, int e1, int j2, int e2, out string mensaje)
         {
             mensaje = "";
@@ -276,14 +300,25 @@ namespace Miticax.Presentacion
         internal static string ExtraerMensaje(object ro)
         {
             if (ro == null) return null;
-            var p = ro.GetType().GetProperty("Mensaje")
-                 ?? ro.GetType().GetProperty("Message")
-                 ?? ro.GetType().GetProperty("Detalle")
-                 ?? ro.GetType().GetProperty("Descripcion")
-                 ?? ro.GetType().GetProperty("Error");
-            if (p == null) return null;
-            var v = p.GetValue(ro);
-            return v?.ToString();
+            var t = ro.GetType();
+
+            // Propiedades
+            var p = t.GetProperty("Mensaje")
+                  ?? t.GetProperty("Message")
+                  ?? t.GetProperty("Detalle")
+                  ?? t.GetProperty("Descripcion")
+                  ?? t.GetProperty("Error");
+            if (p != null) return p.GetValue(ro)?.ToString();
+
+            // Campos
+            var f = t.GetField("Mensaje")
+                  ?? t.GetField("Message")
+                  ?? t.GetField("Detalle")
+                  ?? t.GetField("Descripcion")
+                  ?? t.GetField("Error");
+            if (f != null) return f.GetValue(ro)?.ToString();
+
+            return null;
         }
     }
 }
