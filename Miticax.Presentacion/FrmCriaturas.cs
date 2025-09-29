@@ -47,7 +47,7 @@ namespace Miticax.Presentacion
             lblTipo = new Label() { Text = "Tipo:", Left = 520, Top = 20, Width = 60 };
             cboTipo = new ComboBox()
             {
-                Left = 560,
+                Left = 600,
                 Top = 20,
                 Width = 140,
                 DropDownStyle = ComboBoxStyle.DropDownList,
