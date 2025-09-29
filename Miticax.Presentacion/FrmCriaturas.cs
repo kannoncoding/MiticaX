@@ -118,17 +118,31 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                
+                // costo desde NumericUpDown
                 int costo = (int)nudCosto.Value;
 
+                // Validar combos
+                if (cboTipo.SelectedIndex < 0)
+                {
+                    MessageBox.Show("Debe seleccionar el tipo.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                if (cboNivel.SelectedIndex < 0)
+                {
+                    MessageBox.Show("Debe seleccionar el nivel.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
 
+                // Entidad completa
                 var ent = new Miticax.Entidades.CriaturaEntidad
                 {
                     IdCriatura = id,
                     Nombre = txtNombre.Text.Trim(),
                     Costo = costo,
                     Poder = (int)nudPoder.Value,
-                    Resistencia = (int)nudResistencia.Value
+                    Resistencia = (int)nudResistencia.Value,
+                    Tipo = cboTipo.SelectedItem.ToString().Trim(),
+                    Nivel = cboNivel.SelectedIndex + 1   // 1..5
                 };
 
                 var srv = UiServiciosHelper.CriaturaService();
@@ -140,17 +154,24 @@ namespace Miticax.Presentacion
 
                 if (!exito)
                 {
-                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Error",
-                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg,
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                MessageBox.Show("El registro se ha ingresado correctamente", "Exito",
-                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El registro se ha ingresado correctamente",
+                                "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                txtId.Clear(); txtNombre.Clear();
-                nudPoder.Value = nudPoder.Minimum; nudResistencia.Value = nudResistencia.Minimum;
+                // limpiar y refrescar
+                txtId.Clear();
+                txtNombre.Clear();
+                nudCosto.Value = nudCosto.Minimum;
+                nudPoder.Value = nudPoder.Minimum;
+                nudResistencia.Value = nudResistencia.Minimum;
+                cboTipo.SelectedIndex = -1;
+                cboNivel.SelectedIndex = -1;
                 txtId.Focus();
+
                 RefrescarGrid();
             }
             catch (IndexOutOfRangeException)
@@ -163,6 +184,7 @@ namespace Miticax.Presentacion
                                 MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
 
         // ---- helpers locales para costo ----
