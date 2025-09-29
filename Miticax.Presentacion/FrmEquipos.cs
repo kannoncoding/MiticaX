@@ -146,48 +146,31 @@ namespace Miticax.Presentacion
                 int c2 = ParseLeadingInt(cboC2.SelectedItem.ToString());
                 int c3 = ParseLeadingInt(cboC3.SelectedItem.ToString());
 
-                // Registrar equipo via reflexion (tolera firmas distintas)
-                bool exito = false;
-                string msg = null;
-                object ro = null;
+                var ent = new Miticax.Entidades.EquipoEntidad();
+                ent.IdJugador = idJugador;
+                ent.IdCriatura1 = c1;
+                ent.IdCriatura2 = c2;
+                ent.IdCriatura3 = c3;
 
-                var tSrv = Type.GetType("Miticax.Logica.EquipoService, Miticax.Logica");
-                if (tSrv != null)
+                var srv = UiServiciosHelper.EquipoService();
+                var t = srv.GetType();
+
+                object resultado = null;
+                string errorOut = null;
+
+                // 1) RegistrarEquipo(EquipoEntidad, out string)
+                var m = t.GetMethod("RegistrarEquipo", new Type[] { typeof(Miticax.Entidades.EquipoEntidad), typeof(string).MakeByRefType() })
+                     ?? t.GetMethod("Registrar", new Type[] { typeof(Miticax.Entidades.EquipoEntidad), typeof(string).MakeByRefType() });
+
+                if (m != null)
                 {
-                    // Opcion A: Registrar(int idJugador, int c1, int c2, int c3, out string)
-                    var m1 = tSrv.GetMethod("Registrar", new Type[] { typeof(int), typeof(int), typeof(int), typeof(int), typeof(string).MakeByRefType() });
-                    if (m1 != null)
-                    {
-                        object[] pars = new object[] { idJugador, c1, c2, c3, null };
-                        ro = m1.Invoke(null, pars);
-                        msg = UiServiciosHelper.ExtraerMensaje(ro) ?? (pars[4] as string);
-                    }
-                    else
-                    {
-                        // Opcion B: Registrar(EquipoEntidad, out string)
-                        var tEnt = Type.GetType("Miticax.Entidades.EquipoEntidad, Miticax.Entidades");
-                        var m2 = (tEnt != null) ? tSrv.GetMethod("Registrar", new Type[] { tEnt, typeof(string).MakeByRefType() }) : null;
-                        if (tEnt != null && m2 != null)
-                        {
-                            var ent = Activator.CreateInstance(tEnt);
-                            tEnt.GetProperty("IdJugador")?.SetValue(ent, idJugador);
-                            tEnt.GetProperty("IdCriatura1")?.SetValue(ent, c1);
-                            tEnt.GetProperty("IdCriatura2")?.SetValue(ent, c2);
-                            tEnt.GetProperty("IdCriatura3")?.SetValue(ent, c3);
-
-                            object[] pars = new object[] { ent, null };
-                            ro = m2.Invoke(null, pars);
-                            msg = UiServiciosHelper.ExtraerMensaje(ro) ?? (pars[1] as string);
-                        }
-                    }
+                    object[] pars = new object[] { ent, null };
+                    resultado = m.Invoke(srv, pars);
+                    errorOut = pars[1] as string;
                 }
 
-                if (ro != null)
-                {
-                    var pEx = ro.GetType().GetProperty("Exito");
-                    if (pEx != null) exito = (bool)(pEx.GetValue(ro) ?? false);
-                    msg = UiServiciosHelper.ExtraerMensaje(ro) ?? msg;
-                }
+                bool exito = (resultado != null) && UiServiciosHelper.ExtraerExito(resultado);
+                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? errorOut;
 
                 if (!exito)
                 {
@@ -197,13 +180,8 @@ namespace Miticax.Presentacion
 
                 MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // Reset UI
-                cboJugador.SelectedIndex = -1;
-                cboC1.SelectedIndex = -1;
-                cboC2.SelectedIndex = -1;
-                cboC3.SelectedIndex = -1;
+                cboJugador.SelectedIndex = -1; cboC1.SelectedIndex = -1; cboC2.SelectedIndex = -1; cboC3.SelectedIndex = -1;
                 cboJugador.Focus();
-
                 RefrescarGrid();
             }
             catch (IndexOutOfRangeException)
@@ -215,6 +193,7 @@ namespace Miticax.Presentacion
                 MessageBox.Show("Error al registrar equipo.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         private int ParseLeadingInt(string s)
         {

@@ -105,56 +105,43 @@ namespace Miticax.Presentacion
                 int idJugador = ParseLeadingInt(cboJugador.SelectedItem.ToString());
                 int idCriatura = ParseLeadingInt(cboCriatura.SelectedItem.ToString());
 
-                // Invocar InventarioService.ComprarCriatura por reflexion (soporta firmas comunes)
-                bool exito = false;
-                string msg = null;
+                var srv = UiServiciosHelper.InventarioService();
+                var t = srv.GetType();
 
-                var t = Type.GetType("Miticax.Logica.InventarioService, Miticax.Logica");
-                object ro = null;
-                if (t != null)
+                object resultado = null;
+                string errorOut = null;
+
+                // ComprarCriatura(int,int,out string)
+                var m = t.GetMethod("ComprarCriatura", new Type[] { typeof(int), typeof(int), typeof(string).MakeByRefType() })
+                     ?? t.GetMethod("Comprar", new Type[] { typeof(int), typeof(int), typeof(string).MakeByRefType() });
+
+                if (m != null)
                 {
-                    // Preferido: ComprarCriatura(int,int,out string)
-                    var m1 = t.GetMethod("ComprarCriatura", new Type[] { typeof(int), typeof(int), typeof(string).MakeByRefType() });
-                    if (m1 != null)
-                    {
-                        object[] pars = new object[] { idJugador, idCriatura, null };
-                        ro = m1.Invoke(null, pars);
-                        msg = UiServiciosHelper.ExtraerMensaje(ro) ?? (pars[2] as string);
-                    }
-                    else
-                    {
-                        // Alternativa: ComprarCriatura(int,int)
-                        var m2 = t.GetMethod("ComprarCriatura", new Type[] { typeof(int), typeof(int) });
-                        if (m2 != null) ro = m2.Invoke(null, new object[] { idJugador, idCriatura });
-                    }
+                    object[] pars = new object[] { idJugador, idCriatura, null };
+                    resultado = m.Invoke(srv, pars);
+                    errorOut = pars[2] as string;
                 }
 
-                if (ro != null)
-                {
-                    var pEx = ro.GetType().GetProperty("Exito");
-                    if (pEx != null) exito = (bool)(pEx.GetValue(ro) ?? false);
-                    msg = UiServiciosHelper.ExtraerMensaje(ro) ?? msg;
-                }
+                bool exito = (resultado != null) && UiServiciosHelper.ExtraerExito(resultado);
+                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? errorOut;
 
                 if (!exito)
                 {
-                    // Mensaje exacto si lo provee la capa logica (incluye el de cristales insuficientes)
+                    // si la logica envio "No posee la cantidad de cristales..." lo mostramos tal cual
                     MessageBox.Show(string.IsNullOrWhiteSpace(msg) ? "Operacion no completada" : msg, "Operacion", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
                 MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // Requisito: limpiar campos tras agregar
+                // limpiar y refrescar
                 cboJugador.SelectedIndex = -1;
                 cboCriatura.SelectedIndex = -1;
                 cboJugador.Focus();
-
                 RefrescarGrid();
             }
             catch (IndexOutOfRangeException)
             {
-                // Limite de arreglo alcanzado
                 MessageBox.Show("No se pueden ingresar mas registros", "Limite", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -162,6 +149,7 @@ namespace Miticax.Presentacion
                 MessageBox.Show("Ocurrio un error al comprar la criatura.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         private int ParseLeadingInt(string s)
         {

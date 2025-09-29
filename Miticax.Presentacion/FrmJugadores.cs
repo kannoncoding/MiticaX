@@ -93,13 +93,36 @@ namespace Miticax.Presentacion
                 ent.Nombre = txtNombre.Text.Trim();
                 ent.FechaNacimiento = dtpFecha.Value;
 
-                // Llamar al servicio real (de instancia) construido en UiServiciosHelper
+                // instancia real del servicio
                 var srv = UiServiciosHelper.JugadorService();
-                string error;
-                var resultado = srv.RegistrarJugador(ent, ent.FechaNacimiento, out error);
+                var t = srv.GetType();
 
-                bool exito = (bool)(resultado.GetType().GetProperty("Exito")?.GetValue(resultado) ?? false);
-                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? error;
+                object resultado = null;
+                string errorOut = null;
+
+                // 1) RegistrarJugador(JugadorEntidad, DateTime, out string)
+                var m1 = t.GetMethod("RegistrarJugador", new Type[] { typeof(Miticax.Entidades.JugadorEntidad), typeof(DateTime), typeof(string).MakeByRefType() });
+                if (m1 != null)
+                {
+                    object[] pars = new object[] { ent, ent.FechaNacimiento, null };
+                    resultado = m1.Invoke(srv, pars);
+                    errorOut = pars[2] as string;
+                }
+                else
+                {
+                    // 2) RegistrarJugador(JugadorEntidad, out string)
+                    var m2 = t.GetMethod("RegistrarJugador", new Type[] { typeof(Miticax.Entidades.JugadorEntidad), typeof(string).MakeByRefType() })
+                          ?? t.GetMethod("Registrar", new Type[] { typeof(Miticax.Entidades.JugadorEntidad), typeof(string).MakeByRefType() });
+                    if (m2 != null)
+                    {
+                        object[] pars = new object[] { ent, null };
+                        resultado = m2.Invoke(srv, pars);
+                        errorOut = pars[1] as string;
+                    }
+                }
+
+                bool exito = (resultado != null) && UiServiciosHelper.ExtraerExito(resultado);
+                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? errorOut;
 
                 if (!exito)
                 {
@@ -122,6 +145,7 @@ namespace Miticax.Presentacion
                 MessageBox.Show("Ocurrio un error al registrar el jugador.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
 
         private void Refrescar()

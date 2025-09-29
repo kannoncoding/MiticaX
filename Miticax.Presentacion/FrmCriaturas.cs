@@ -105,7 +105,6 @@ namespace Miticax.Presentacion
         {
             try
             {
-                // Validaciones basicas de UI
                 int id;
                 if (!int.TryParse(txtId.Text.Trim(), out id) || id <= 0)
                 {
@@ -117,50 +116,39 @@ namespace Miticax.Presentacion
                     MessageBox.Show("El nombre es requerido.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
-                if (cboTipo.SelectedIndex < 0)
+                int costo;
+                if (!int.TryParse(txtCosto.Text.Trim(), out costo) || costo < 0)
                 {
-                    MessageBox.Show("Debe seleccionar el tipo.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-                if (cboNivel.SelectedIndex < 0)
-                {
-                    MessageBox.Show("Debe seleccionar el nivel.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Costo invalido.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                // Construir entidad
-                var ent = new CriaturaEntidad();
+                var ent = new Miticax.Entidades.CriaturaEntidad();
                 ent.IdCriatura = id;
                 ent.Nombre = txtNombre.Text.Trim();
-                ent.Tipo = cboTipo.SelectedItem.ToString();   // agua/tierra/aire/fuego
-                ent.Nivel = cboNivel.SelectedIndex + 1;       // 1..5
+                ent.Costo = costo;
                 ent.Poder = (int)nudPoder.Value;
                 ent.Resistencia = (int)nudResistencia.Value;
-                ent.Costo = (int)nudCosto.Value;
 
-                // Llamar servicio de logica por nombre (tu firma puede variar)
-                string errorDatos;
-                var t = Type.GetType("Miticax.Logica.CriaturaService, Miticax.Logica");
+                var srv = UiServiciosHelper.CriaturaService();
+                var t = srv.GetType();
+
                 object resultado = null;
-                if (t != null)
+                string errorOut = null;
+
+                // 1) RegistrarCriatura(CriaturaEntidad, out string)
+                var m = t.GetMethod("RegistrarCriatura", new Type[] { typeof(Miticax.Entidades.CriaturaEntidad), typeof(string).MakeByRefType() })
+                     ?? t.GetMethod("Registrar", new Type[] { typeof(Miticax.Entidades.CriaturaEntidad), typeof(string).MakeByRefType() });
+
+                if (m != null)
                 {
-                    var m = t.GetMethod("Registrar", new Type[] { typeof(CriaturaEntidad), typeof(string).MakeByRefType() });
-                    if (m != null)
-                    {
-                        object[] pars = new object[] { ent, null };
-                        resultado = m.Invoke(null, pars);
-                        errorDatos = pars[1] as string;
-                    }
+                    object[] pars = new object[] { ent, null };
+                    resultado = m.Invoke(srv, pars);
+                    errorOut = pars[1] as string;
                 }
 
-                // Evaluar resultado
-                bool exito = false;
-                string msg = null;
-                if (resultado != null)
-                {
-                    exito = (bool)(resultado.GetType().GetProperty("Exito")?.GetValue(resultado) ?? false);
-                    msg = UiServiciosHelper.ExtraerMensaje(resultado);
-                }
+                bool exito = (resultado != null) && UiServiciosHelper.ExtraerExito(resultado);
+                string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? errorOut;
 
                 if (!exito)
                 {
@@ -168,20 +156,12 @@ namespace Miticax.Presentacion
                     return;
                 }
 
-                // Exito
                 MessageBox.Show("El registro se ha ingresado correctamente", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // Limpiar para la siguiente alta
-                txtId.Clear();
-                txtNombre.Clear();
-                cboTipo.SelectedIndex = -1;
-                cboNivel.SelectedIndex = -1;
-                nudPoder.Value = 0;
-                nudResistencia.Value = 0;
-                nudCosto.Value = 0;
+                // limpiar y refrescar
+                txtId.Clear(); txtNombre.Clear(); txtCosto.Clear();
+                nudPoder.Value = nudPoder.Minimum; nudResistencia.Value = nudResistencia.Minimum;
                 txtId.Focus();
-
-                // Refrescar grid
                 RefrescarGrid();
             }
             catch (IndexOutOfRangeException)
@@ -193,6 +173,7 @@ namespace Miticax.Presentacion
                 MessageBox.Show("Ocurrio un error al registrar la criatura.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         private void RefrescarGrid()
         {

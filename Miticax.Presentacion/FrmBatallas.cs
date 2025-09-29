@@ -144,7 +144,6 @@ namespace Miticax.Presentacion
                 int j2 = ParseLeadingInt(cboJ2.SelectedItem.ToString());
                 int e2 = ParseLeadingInt(cboE2.SelectedItem.ToString());
 
-                // Usar helper que ya contempla firmas distintas y extrae mensaje
                 string msg;
                 bool ok = UiServiciosHelper.TryRegistrarBatalla(j1, e1, j2, e2, out msg);
                 if (!ok)
@@ -170,14 +169,7 @@ namespace Miticax.Presentacion
         {
             try
             {
-                // Ejecuta la ultima batalla registrada (puedes extender a seleccion desde grid si gustas)
                 int idBatalla = UiServiciosHelper.UltimoIdBatalla();
-                if (idBatalla <= 0)
-                {
-                    MessageBox.Show("No hay batallas registradas.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
                 string msg;
                 bool ok = UiServiciosHelper.TryEjecutarBatalla(idBatalla, out msg);
                 if (!ok)
