@@ -176,6 +176,11 @@ namespace Miticax.Presentacion
             return max;
         }
 
+        internal static int SiguienteIdBatalla()
+        {
+            return UltimoIdBatalla() + 1; // usa el snapshot de BatallaDatos
+        }
+
         internal static int SiguienteIdEquipo()
         {
             var arr = EquipoDatos().GetAllSnapshot(); // usa el singleton
@@ -187,7 +192,7 @@ namespace Miticax.Presentacion
                     var it = arr[i];
                     if (it == null) continue;
                     int id;
-                    // Reutiliza tu helper TryGetIntPropertyValue si ya lo tienes; sino, lee la prop directamente
+                    // Reutiliza el helper TryGetIntPropertyValue sino, lee la prop directamente
                     var p = it.GetType().GetProperty("IdEquipo");
                     if (p != null)
                     {

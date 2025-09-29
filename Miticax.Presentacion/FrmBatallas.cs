@@ -145,17 +145,20 @@ namespace Miticax.Presentacion
                 int j2 = ParseLeadingInt(cboJ2.SelectedItem.ToString());
                 int e2 = ParseLeadingInt(cboE2.SelectedItem.ToString());
 
+                // Construir entidad con IdBatalla positivo
                 var ent = new Miticax.Entidades.BatallaEntidad
                 {
+                    IdBatalla = UiServiciosHelper.SiguienteIdBatalla(), // <-- clave
                     IdJugador1 = j1,
                     IdEquipo1 = e1,
                     IdJugador2 = j2,
-                    IdEquipo2 = e2
+                    IdEquipo2 = e2,
+                    Fecha = DateTime.Now
                 };
 
                 var srv = UiServiciosHelper.BatallaService();
                 string error;
-                var resultado = srv.RegistrarBatalla(ent, out error); // <- ENTIDAD
+                var resultado = srv.RegistrarBatalla(ent, out error);
 
                 bool exito = resultado.Exito;
                 string msg = UiServiciosHelper.ExtraerMensaje(resultado) ?? error;
@@ -181,6 +184,7 @@ namespace Miticax.Presentacion
                                 MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         private void BtnEjecutar_Click(object sender, EventArgs e)
         {

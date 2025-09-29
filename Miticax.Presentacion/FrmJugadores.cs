@@ -34,7 +34,7 @@ namespace Miticax.Presentacion
             txtId = new TextBox() { Left = 120, Top = 16, Width = 120, TabIndex = 0 };
 
             lblNombre = new Label() { Text = "Nombre:", Left = 260, Top = 20, Width = 80 };
-            txtNombre = new TextBox() { Left = 330, Top = 16, Width = 200, TabIndex = 1 };
+            txtNombre = new TextBox() { Left = 340, Top = 20, Width = 200, TabIndex = 1 };
 
             lblFecha = new Label() { Text = "Fecha Nac.:", Left = 540, Top = 20, Width = 90 };
             dtpFecha = new DateTimePicker() { Left = 630, Top = 16, Width = 150, TabIndex = 2, Format = DateTimePickerFormat.Short };
