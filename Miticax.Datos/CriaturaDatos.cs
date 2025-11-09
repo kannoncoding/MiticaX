@@ -1,83 +1,207 @@
 ﻿//UNED
 //Mitica X
 //Jorge Arias Melendez
-//Septiembre 2025
-//Acceso a datos: arreglo y operaciones basicas para CriaturaEntidad
+//Tercer cuatrimestre 2025
+//Acceso a datos: operaciones CRUD en SQL Server para la entidad Criatura
 
+using System;
+using System.Data;
+using Microsoft.Data.SqlClient;
 using Miticax.Entidades;
 
 namespace Miticax.Datos
 {
     public class CriaturaDatos
     {
-        // Arreglo de almacenamiento fijo para CriaturaEntidad.
-        private readonly CriaturaEntidad[] _items = new CriaturaEntidad[ConstantesDatos.CapacidadCriaturas];
+        // Instancia de la clase de conexion para reutilizar los metodos de ADO.NET
+        private readonly ConexionBD conexion = new ConexionBD();
 
-        // Contador de elementos realmente ocupados en el arreglo.
-        private int _count = 0;
-
-        // Inserta una criatura si hay espacio.
-        public bool Insert(CriaturaEntidad item, out string error)
+        // Inserta una criatura en la tabla dbo.Criatura
+        public bool Insertar(CriaturaEntidad item, out string error)
         {
-            // Verifica espacio disponible comparando _count con la capacidad del arreglo.
-            if (_count >= _items.Length)
+            error = string.Empty;
+            try
             {
-                error = "No se pueden ingresar mas registros (criaturas).";
+                string sql = @"INSERT INTO dbo.Criatura
+                               (IdCriatura, Nombre, Tipo, Nivel, Poder, Resistencia, Costo)
+                               VALUES (@Id, @Nombre, @Tipo, @Nivel, @Poder, @Resistencia, @Costo)";
+
+                int filas = conexion.EjecutarNoQuery(sql, p =>
+                {
+                    p.AddWithValue("@Id", item.IdCriatura);
+                    p.AddWithValue("@Nombre", item.Nombre);
+                    p.AddWithValue("@Tipo", item.Tipo);
+                    p.AddWithValue("@Nivel", item.Nivel);
+                    p.AddWithValue("@Poder", item.Poder);
+                    p.AddWithValue("@Resistencia", item.Resistencia);
+                    p.AddWithValue("@Costo", item.Costo);
+                });
+
+                return filas == 1;
+            }
+            catch (SqlException ex)
+            {
+                error = "Error SQL al insertar criatura: " + ex.Message;
                 return false;
             }
+            catch (Exception ex)
+            {
+                error = "Error general al insertar criatura: " + ex.Message;
+                return false;
+            }
+        }
 
-            // Coloca el item en la posicion _count y luego incrementa el contador.
-            _items[_count] = item;
-            _count++;
-
+        // Actualiza una criatura existente en la BD
+        public bool Actualizar(CriaturaEntidad item, out string error)
+        {
             error = string.Empty;
-            return true;
-        }
-
-        // Busca linealmente por IdCriatura. Retorna null si no encuentra coincidencias.
-        public CriaturaEntidad? FindById(int idCriatura)
-        {
-            // Recorre solo hasta _count para evitar revisar posiciones vacias.
-            for (int i = 0; i < _count; i++)
+            try
             {
-                if (_items[i] != null && _items[i].IdCriatura == idCriatura)
+                string sql = @"UPDATE dbo.Criatura SET 
+                               Nombre=@Nombre, Tipo=@Tipo, Nivel=@Nivel,
+                               Poder=@Poder, Resistencia=@Resistencia, Costo=@Costo
+                               WHERE IdCriatura=@Id";
+
+                int filas = conexion.EjecutarNoQuery(sql, p =>
                 {
-                    return _items[i];
-                }
+                    p.AddWithValue("@Nombre", item.Nombre);
+                    p.AddWithValue("@Tipo", item.Tipo);
+                    p.AddWithValue("@Nivel", item.Nivel);
+                    p.AddWithValue("@Poder", item.Poder);
+                    p.AddWithValue("@Resistencia", item.Resistencia);
+                    p.AddWithValue("@Costo", item.Costo);
+                    p.AddWithValue("@Id", item.IdCriatura);
+                });
+
+                return filas == 1;
             }
-            return null;
+            catch (SqlException ex)
+            {
+                error = "Error SQL al actualizar criatura: " + ex.Message;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                error = "Error general al actualizar criatura: " + ex.Message;
+                return false;
+            }
         }
 
-        // Devuelve un clon superficial de los elementos ocupados (snapshot inmutable para el exterior).
-        public CriaturaEntidad[] GetAllSnapshot()
+        // Elimina una criatura por su Id
+        public bool Eliminar(int idCriatura, out string error)
         {
-            // Crea un nuevo arreglo del tamano exacto de lo almacenado.
-            var copia = new CriaturaEntidad[_count];
-            // Copia con un for para cumplir la restriccion de no usar helpers externos.
-            for (int i = 0; i < _count; i++)
+            error = string.Empty;
+            try
             {
-                copia[i] = _items[i];
-            }
-            return copia;
-        }
+                string sql = "DELETE FROM dbo.Criatura WHERE IdCriatura=@Id";
 
-        // Helper: obtiene el indice dentro del arreglo por Id (o -1 si no existe).
-        public int IndexOfById(int idCriatura)
-        {
-            for (int i = 0; i < _count; i++)
-            {
-                if (_items[i] != null && _items[i].IdCriatura == idCriatura)
+                int filas = conexion.EjecutarNoQuery(sql, p =>
                 {
-                    return i;
-                }
+                    p.AddWithValue("@Id", idCriatura);
+                });
+
+                return filas == 1;
             }
-            return -1;
+            catch (SqlException ex)
+            {
+                error = "Error SQL al eliminar criatura: " + ex.Message;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                error = "Error general al eliminar criatura: " + ex.Message;
+                return false;
+            }
         }
 
-        // Expone solo lectura del conteo actual.
-        public int Count()
+        // Busca una criatura por su Id
+        public CriaturaEntidad? BuscarPorId(int idCriatura, out string error)
         {
-            return _count;
+            error = string.Empty;
+            try
+            {
+                string sql = @"SELECT IdCriatura, Nombre, Tipo, Nivel, Poder, Resistencia, Costo
+                               FROM dbo.Criatura WHERE IdCriatura=@Id";
+
+                using (SqlDataReader dr = conexion.EjecutarReader(sql, p => p.AddWithValue("@Id", idCriatura)))
+                {
+                    if (dr.Read())
+                    {
+                        // Mapea los campos leídos a una instancia de CriaturaEntidad
+                        return new CriaturaEntidad
+                        {
+                            IdCriatura = dr.GetInt32(0),
+                            Nombre = dr.GetString(1),
+                            Tipo = dr.GetString(2),
+                            Nivel = dr.GetInt32(3),
+                            Poder = dr.GetInt32(4),
+                            Resistencia = dr.GetInt32(5),
+                            Costo = dr.GetInt32(6)
+                        };
+                    }
+                }
+                return null;
+            }
+            catch (SqlException ex)
+            {
+                error = "Error SQL al buscar criatura: " + ex.Message;
+                return null;
+            }
+            catch (Exception ex)
+            {
+                error = "Error general al buscar criatura: " + ex.Message;
+                return null;
+            }
+        }
+
+        // Obtiene todas las criaturas como un arreglo de entidades (limite maximo configurable)
+        public CriaturaEntidad[] ObtenerTodos(out string error, int max = 200)
+        {
+            error = string.Empty;
+            CriaturaEntidad[] arreglo = new CriaturaEntidad[max];
+            int i = 0;
+
+            try
+            {
+                string sql = @"SELECT IdCriatura, Nombre, Tipo, Nivel, Poder, Resistencia, Costo
+                               FROM dbo.Criatura ORDER BY IdCriatura ASC";
+
+                using (SqlDataReader dr = conexion.EjecutarReader(sql))
+                {
+                    while (dr.Read() && i < max)
+                    {
+                        arreglo[i] = new CriaturaEntidad
+                        {
+                            IdCriatura = dr.GetInt32(0),
+                            Nombre = dr.GetString(1),
+                            Tipo = dr.GetString(2),
+                            Nivel = dr.GetInt32(3),
+                            Poder = dr.GetInt32(4),
+                            Resistencia = dr.GetInt32(5),
+                            Costo = dr.GetInt32(6)
+                        };
+                        i++;
+                    }
+                }
+
+                // Redimensiona el arreglo a la cantidad real leída
+                CriaturaEntidad[] resultado = new CriaturaEntidad[i];
+                for (int j = 0; j < i; j++)
+                {
+                    resultado[j] = arreglo[j];
+                }
+                return resultado;
+            }
+            catch (SqlException ex)
+            {
+                error = "Error SQL al obtener criaturas: " + ex.Message;
+                return new CriaturaEntidad[0];
+            }
+            catch (Exception ex)
+            {
+                error = "Error general al obtener criaturas: " + ex.Message;
+                return new CriaturaEntidad[0];
+            }
         }
     }
 }
