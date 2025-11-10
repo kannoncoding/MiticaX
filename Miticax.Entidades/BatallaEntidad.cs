@@ -20,7 +20,7 @@ namespace Miticax.Entidades
 
         public int IdEquipo2 { get; set; }
 
-        public int Ganador { get; set; }
+        public int? Ganador { get; set; }
 
         public DateTime Fecha { get; set; }
     }
