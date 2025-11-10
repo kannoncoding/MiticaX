@@ -68,7 +68,7 @@ namespace Miticax.Logica
             };
 
             // Intentar insertar en inventario
-            bool ok = _inventarioDatos.Insert(inv, out errorDatos);
+            bool ok = _inventarioDatos.Insertar(inv, out errorDatos);
             if (!ok) return ResultadoOperacion.Fail(errorDatos);
 
             // Solo si el insert fue exitoso, se descuentan cristales
