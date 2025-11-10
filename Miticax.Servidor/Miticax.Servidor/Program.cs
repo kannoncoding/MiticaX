@@ -1,17 +1,27 @@
+//UNED
+//Mitica X
+//Jorge Arias Melendez
+//Tercer cuatrimestre 2025
+//Punto de entrada de la app WinForms del Servidor TCP.
+
+using Miticax.Presentacion;
+using System;
+using System.Windows.Forms;
+
 namespace Miticax.Servidor
 {
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
+        // El arranque de la app (WinForms).
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
+            // Inicializa configuracion de WinForms (DPI, fuentes).
             ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+
+            // Abre el formulario principal del servidor.
+            // IMPORTANTE: Asegurate de que el nombre de la clase coincida con tu form real.
+            Application.Run(new FrmServidor());
         }
     }
 }
