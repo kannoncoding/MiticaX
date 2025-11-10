@@ -2,21 +2,14 @@
 //Mitica X
 //Jorge Arias Melendez
 //Tercer cuatrimestre 2025
-//Archivo Designer para FrmClienteTcp: define y configura los controles del formulario cliente TCP.
+//Archivo Designer para FrmClienteTcp: define y configura los controles del formulario cliente TCP (incluye Login).
 
 namespace Miticax.Cliente
 {
     partial class FrmClienteTcp
     {
-        /// <summary>
-        /// Variable de diseñador necesaria.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Limpiar los recursos que se estén usando.
-        /// </summary>
-        /// <param name="disposing">true si los recursos administrados se deben eliminar; false en caso contrario.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -28,9 +21,6 @@ namespace Miticax.Cliente
 
         #region Código generado por el Diseñador de Windows Forms
 
-        /// <summary>
-        /// Método requerido para admitir el Diseñador.
-        /// </summary>
         private void InitializeComponent()
         {
             this.lblHost = new System.Windows.Forms.Label();
@@ -42,7 +32,15 @@ namespace Miticax.Cliente
             this.txtEnviar = new System.Windows.Forms.TextBox();
             this.btnEnviar = new System.Windows.Forms.Button();
             this.btnPing = new System.Windows.Forms.Button();
+            this.grpLogin = new System.Windows.Forms.GroupBox();
+            this.lblLoginEstado = new System.Windows.Forms.Label();
+            this.btnLogin = new System.Windows.Forms.Button();
+            this.txtClave = new System.Windows.Forms.TextBox();
+            this.lblClave = new System.Windows.Forms.Label();
+            this.txtUsuario = new System.Windows.Forms.TextBox();
+            this.lblUsuario = new System.Windows.Forms.Label();
             this.txtLog = new System.Windows.Forms.TextBox();
+            this.grpLogin.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblHost
@@ -124,15 +122,82 @@ namespace Miticax.Cliente
             this.btnPing.UseVisualStyleBackColor = true;
             this.btnPing.Click += new System.EventHandler(this.BtnPing_Click);
             // 
+            // grpLogin
+            // 
+            this.grpLogin.Controls.Add(this.lblLoginEstado);
+            this.grpLogin.Controls.Add(this.btnLogin);
+            this.grpLogin.Controls.Add(this.txtClave);
+            this.grpLogin.Controls.Add(this.lblClave);
+            this.grpLogin.Controls.Add(this.txtUsuario);
+            this.grpLogin.Controls.Add(this.lblUsuario);
+            this.grpLogin.Location = new System.Drawing.Point(10, 90);
+            this.grpLogin.Name = "grpLogin";
+            this.grpLogin.Size = new System.Drawing.Size(770, 80);
+            this.grpLogin.TabIndex = 10;
+            this.grpLogin.TabStop = false;
+            this.grpLogin.Text = "Login";
+            // 
+            // lblLoginEstado
+            // 
+            this.lblLoginEstado.AutoSize = true;
+            this.lblLoginEstado.Location = new System.Drawing.Point(560, 33);
+            this.lblLoginEstado.Name = "lblLoginEstado";
+            this.lblLoginEstado.Size = new System.Drawing.Size(86, 15);
+            this.lblLoginEstado.TabIndex = 5;
+            this.lblLoginEstado.Text = "No autenticado";
+            // 
+            // btnLogin
+            // 
+            this.btnLogin.Location = new System.Drawing.Point(465, 28);
+            this.btnLogin.Name = "btnLogin";
+            this.btnLogin.Size = new System.Drawing.Size(80, 27);
+            this.btnLogin.TabIndex = 4;
+            this.btnLogin.Text = "Login";
+            this.btnLogin.UseVisualStyleBackColor = true;
+            this.btnLogin.Click += new System.EventHandler(this.BtnLogin_Click);
+            // 
+            // txtClave
+            // 
+            this.txtClave.Location = new System.Drawing.Point(300, 30);
+            this.txtClave.Name = "txtClave";
+            this.txtClave.PasswordChar = '*';
+            this.txtClave.Size = new System.Drawing.Size(150, 23);
+            this.txtClave.TabIndex = 3;
+            // 
+            // lblClave
+            // 
+            this.lblClave.AutoSize = true;
+            this.lblClave.Location = new System.Drawing.Point(250, 33);
+            this.lblClave.Name = "lblClave";
+            this.lblClave.Size = new System.Drawing.Size(41, 15);
+            this.lblClave.TabIndex = 2;
+            this.lblClave.Text = "Clave:";
+            // 
+            // txtUsuario
+            // 
+            this.txtUsuario.Location = new System.Drawing.Point(70, 30);
+            this.txtUsuario.Name = "txtUsuario";
+            this.txtUsuario.Size = new System.Drawing.Size(150, 23);
+            this.txtUsuario.TabIndex = 1;
+            // 
+            // lblUsuario
+            // 
+            this.lblUsuario.AutoSize = true;
+            this.lblUsuario.Location = new System.Drawing.Point(10, 33);
+            this.lblUsuario.Name = "lblUsuario";
+            this.lblUsuario.Size = new System.Drawing.Size(52, 15);
+            this.lblUsuario.TabIndex = 0;
+            this.lblUsuario.Text = "Usuario:";
+            // 
             // txtLog
             // 
-            this.txtLog.Location = new System.Drawing.Point(10, 90);
+            this.txtLog.Location = new System.Drawing.Point(10, 180);
             this.txtLog.Multiline = true;
             this.txtLog.Name = "txtLog";
             this.txtLog.ReadOnly = true;
             this.txtLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtLog.Size = new System.Drawing.Size(770, 380);
-            this.txtLog.TabIndex = 9;
+            this.txtLog.Size = new System.Drawing.Size(770, 290);
+            this.txtLog.TabIndex = 11;
             // 
             // FrmClienteTcp
             // 
@@ -140,6 +205,7 @@ namespace Miticax.Cliente
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 480);
             this.Controls.Add(this.txtLog);
+            this.Controls.Add(this.grpLogin);
             this.Controls.Add(this.btnPing);
             this.Controls.Add(this.btnEnviar);
             this.Controls.Add(this.txtEnviar);
@@ -152,6 +218,8 @@ namespace Miticax.Cliente
             this.Name = "FrmClienteTcp";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Cliente TCP - MiticaX";
+            this.grpLogin.ResumeLayout(false);
+            this.grpLogin.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
@@ -167,6 +235,16 @@ namespace Miticax.Cliente
         private System.Windows.Forms.TextBox txtEnviar;
         private System.Windows.Forms.Button btnEnviar;
         private System.Windows.Forms.Button btnPing;
+
+        // Controles de Login
+        private System.Windows.Forms.GroupBox grpLogin;
+        private System.Windows.Forms.Label lblUsuario;
+        private System.Windows.Forms.TextBox txtUsuario;
+        private System.Windows.Forms.Label lblClave;
+        private System.Windows.Forms.TextBox txtClave;
+        private System.Windows.Forms.Button btnLogin;
+        private System.Windows.Forms.Label lblLoginEstado;
+
         private System.Windows.Forms.TextBox txtLog;
     }
 }
