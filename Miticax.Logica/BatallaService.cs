@@ -44,8 +44,8 @@ namespace Miticax.Logica
             if (ya != null) return ResultadoOperacion.Fail("Ya existe una batalla con ese IdBatalla");
 
             // Jugadores deben existir y ser distintos
-            var j1 = _jugadorDatos.FindById(batalla.IdJugador1);
-            var j2 = _jugadorDatos.FindById(batalla.IdJugador2);
+            var j1 = _jugadorDatos.BuscarPorId(batalla.IdJugador1, out string errorJ1);
+            var j2 = _jugadorDatos.BuscarPorId(batalla.IdJugador2, out string errorJ2);
             if (j1 == null || j2 == null) return ResultadoOperacion.Fail("Jugador1 o Jugador2 no existe");
             if (batalla.IdJugador1 == batalla.IdJugador2) return ResultadoOperacion.Fail("Los jugadores deben ser distintos");
 
@@ -150,7 +150,7 @@ namespace Miticax.Logica
 
             // 5) Determinar ganador final y VERIFICAR su existencia ANTES de cualquier side-effect
             int idGanador = (rondasGanadasJ1 > rondasGanadasJ2) ? batalla.IdJugador1 : batalla.IdJugador2;
-            var ganador = _jugadorDatos.FindById(idGanador);
+            var ganador = _jugadorDatos.BuscarPorId(idGanador, out string errorG1);
             if (ganador == null)
             {
                 error = "No se encontro el jugador ganador (IdJugador=" + idGanador + "). "

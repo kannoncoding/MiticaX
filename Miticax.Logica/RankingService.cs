@@ -26,7 +26,7 @@ namespace Miticax.Logica
         public JugadorEntidad[] Top10()
         {
             // Tomar snapshot (arreglo con tamaño = count)
-            var snap = _jugadorDatos.GetAllSnapshot();
+            var snap = _jugadorDatos.ObtenerTodos(out string error);
 
             // Hacer una copia (para no alterar el snapshot original) de igual tamanio
             var copia = new JugadorEntidad[snap.Length];

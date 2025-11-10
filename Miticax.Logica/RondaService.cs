@@ -58,9 +58,9 @@ namespace Miticax.Logica
                 return ResultadoOperacion.Fail("Los jugadores de la ronda no pertenecen a la batalla especificada");
 
             // 5) Verificar existencia de jugadores (defensivo)
-            var j1 = _jugadorDatos.FindById(ronda.IdJugador1);
+            var j1 = _jugadorDatos.BuscarPorId(ronda.IdJugador1, out string errorJ1);
             if (j1 == null) return ResultadoOperacion.Fail("IdJugador1 no existe (Id=" + ronda.IdJugador1 + ")");
-            var j2 = _jugadorDatos.FindById(ronda.IdJugador2);
+            var j2 = _jugadorDatos.BuscarPorId(ronda.IdJugador2, out string errorJ2);
             if (j2 == null) return ResultadoOperacion.Fail("IdJugador2 no existe (Id=" + ronda.IdJugador2 + ")");
 
             // 5.1) Cargar equipos de la batalla
@@ -140,9 +140,9 @@ namespace Miticax.Logica
                 return ResultadoOperacion.Fail("Los jugadores de la ronda no pertenecen a la batalla especificada");
 
             // 5) Existencia de jugadores (defensivo)
-            var j1 = _jugadorDatos.FindById(ronda.IdJugador1);
+            var j1 = _jugadorDatos.BuscarPorId(ronda.IdJugador1, out string errorJ1);
             if (j1 == null) return ResultadoOperacion.Fail("IdJugador1 no existe (Id=" + ronda.IdJugador1 + ")");
-            var j2 = _jugadorDatos.FindById(ronda.IdJugador2);
+            var j2 = _jugadorDatos.BuscarPorId(ronda.IdJugador2, out string errorJ2);
             if (j2 == null) return ResultadoOperacion.Fail("IdJugador2 no existe (Id=" + ronda.IdJugador2 + ")");
 
             // 6) Cargar equipos de la batalla
@@ -186,7 +186,7 @@ namespace Miticax.Logica
             if (!ok) return ResultadoOperacion.Fail(errorDatos);
 
             // 12) Recompensas por ronda
-            var ganador = _jugadorDatos.FindById(ronda.GanadorRonda);
+            var ganador = _jugadorDatos.BuscarPorId(ronda.GanadorRonda, out string error);
             if (ganador != null) ganador.Cristales += 10;
 
             int idJugadorGanador = ronda.GanadorRonda;
@@ -246,7 +246,7 @@ namespace Miticax.Logica
             // Verificacion defensiva para evitar recompensas incoherentes
             if (ronda.GanadorRonda != ronda.IdJugador1 && ronda.GanadorRonda != ronda.IdJugador2) return;
 
-            var ganador = _jugadorDatos.FindById(ronda.GanadorRonda);
+            var ganador = _jugadorDatos.BuscarPorId(ronda.GanadorRonda, out string errorJ);
             if (ganador != null) ganador.Cristales += 10;
 
             int idJugadorGanador = ronda.GanadorRonda;

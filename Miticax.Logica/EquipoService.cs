@@ -36,7 +36,7 @@ namespace Miticax.Logica
             if (ya != null) return ResultadoOperacion.Fail("Ya existe un equipo con ese IdEquipo");
 
             // Validar jugador existe
-            var jugador = _jugadorDatos.FindById(entidad.IdJugador);
+            var jugador = _jugadorDatos.BuscarPorId(entidad.IdJugador, out string error);
             if (jugador == null) return ResultadoOperacion.Fail("Jugador no existe");
 
             // Validar no repetidos

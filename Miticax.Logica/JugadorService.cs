@@ -29,7 +29,7 @@ namespace Miticax.Logica
             if (!Validaciones.EdadMayorA10(entidad.FechaNacimiento, ahora)) return ResultadoOperacion.Fail("El jugador debe tener mas de 10 anios");
 
             // Unicidad de IdJugador
-            var existente = _jugadorDatos.FindById(entidad.IdJugador);
+            var existente = _jugadorDatos.BuscarPorId(entidad.IdJugador, out string error);
             if (existente != null) return ResultadoOperacion.Fail("Ya existe un jugador con ese IdJugador");
 
             // Iniciales
@@ -37,7 +37,7 @@ namespace Miticax.Logica
             entidad.BatallasGanadas = 0;   // Inicia en 0
             entidad.Nivel = 1;             // 1 = Novato
 
-            bool ok = _jugadorDatos.Insert(entidad, out errorDatos);
+            bool ok = _jugadorDatos.Insertar(entidad, out errorDatos);
             if (!ok) return ResultadoOperacion.Fail(errorDatos);
 
             return ResultadoOperacion.Ok();
@@ -46,7 +46,7 @@ namespace Miticax.Logica
         // Recalcula y actualiza nivel segun batallas ganadas.
         public void RecalcularNivel(int idJugador)
         {
-            var jugador = _jugadorDatos.FindById(idJugador);
+            var jugador = _jugadorDatos.BuscarPorId(idJugador, out string errorJ1);
             if (jugador == null) return; // Silencioso: no existe
 
             jugador.Nivel = Mapeos.CalcularNivelJugadorPorVictorias(jugador.BatallasGanadas);

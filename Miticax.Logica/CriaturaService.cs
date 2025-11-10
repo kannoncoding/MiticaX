@@ -34,14 +34,14 @@ namespace Miticax.Logica
             if (!Validaciones.CostoPorNivelValido(entidad.Nivel, entidad.Costo)) return ResultadoOperacion.Fail("Costo no valido para el nivel de criatura");
 
             // Unicidad de IdCriatura
-            var existente = _criaturaDatos.FindById(entidad.IdCriatura);
+            var existente = _criaturaDatos.BuscarPorId(entidad.IdCriatura, out string error);
             if (existente != null) return ResultadoOperacion.Fail("Ya existe una criatura con ese IdCriatura");
 
             // Normalizar tipo a minusculas
             entidad.Tipo = Mapeos.NormalizarTipo(entidad.Tipo);
 
             // Insertar en arreglo (Datos controla capacidad)
-            bool ok = _criaturaDatos.Insert(entidad, out errorDatos);
+            bool ok = _criaturaDatos.Insertar(entidad, out errorDatos);
             if (!ok) return ResultadoOperacion.Fail(errorDatos);
 
             return ResultadoOperacion.Ok();

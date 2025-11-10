@@ -29,11 +29,11 @@ namespace Miticax.Logica
             errorDatos = "";
 
             // Verificar jugador
-            var jugador = _jugadorDatos.FindById(idJugador);
+            var jugador = _jugadorDatos.BuscarPorId(idJugador, out string errorJ1);
             if (jugador == null) return ResultadoOperacion.Fail("Jugador no existe");
 
             // Verificar criatura
-            var criatura = _criaturaDatos.FindById(idCriatura);
+            var criatura = _criaturaDatos.BuscarPorId(idCriatura, out string errorC1);
             if (criatura == null) return ResultadoOperacion.Fail("Criatura no existe");
 
             // Salvaguardas de integridad (por si hay datos legado o registros inconsistentes)
