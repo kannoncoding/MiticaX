@@ -1,8 +1,8 @@
 ﻿//UNED
 //Mitica X
 //Jorge Arias Melendez
-//Tercer cuatrimestre 2025
-//Archivo Designer para FrmClienteTcp: define y configura los controles del formulario cliente TCP (incluye Login).
+//tercer cuatrimestre 2025
+//Archivo Designer para FrmClienteTcp: define y configura los controles del formulario cliente TCP (incluye Login y Modulos).
 
 namespace Miticax.Cliente
 {
@@ -39,8 +39,14 @@ namespace Miticax.Cliente
             this.lblClave = new System.Windows.Forms.Label();
             this.txtUsuario = new System.Windows.Forms.TextBox();
             this.lblUsuario = new System.Windows.Forms.Label();
+            this.grpModulos = new System.Windows.Forms.GroupBox();
+            this.btnConsultas = new System.Windows.Forms.Button();
+            this.btnBatallas = new System.Windows.Forms.Button();
+            this.btnEquipos = new System.Windows.Forms.Button();
+            this.btnInventario = new System.Windows.Forms.Button();
             this.txtLog = new System.Windows.Forms.TextBox();
             this.grpLogin.SuspendLayout();
+            this.grpModulos.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblHost
@@ -189,15 +195,69 @@ namespace Miticax.Cliente
             this.lblUsuario.TabIndex = 0;
             this.lblUsuario.Text = "Usuario:";
             // 
+            // grpModulos
+            // 
+            this.grpModulos.Controls.Add(this.btnConsultas);
+            this.grpModulos.Controls.Add(this.btnBatallas);
+            this.grpModulos.Controls.Add(this.btnEquipos);
+            this.grpModulos.Controls.Add(this.btnInventario);
+            this.grpModulos.Location = new System.Drawing.Point(10, 180);
+            this.grpModulos.Name = "grpModulos";
+            this.grpModulos.Size = new System.Drawing.Size(770, 60);
+            this.grpModulos.TabIndex = 12;
+            this.grpModulos.TabStop = false;
+            this.grpModulos.Text = "Modulos";
+            this.grpModulos.Enabled = false; // deshabilitado hasta que haya LOGIN_OK
+            // 
+            // btnConsultas
+            // 
+            this.btnConsultas.Location = new System.Drawing.Point(475, 22);
+            this.btnConsultas.Name = "btnConsultas";
+            this.btnConsultas.Size = new System.Drawing.Size(120, 27);
+            this.btnConsultas.TabIndex = 3;
+            this.btnConsultas.Text = "Consultas";
+            this.btnConsultas.UseVisualStyleBackColor = true;
+            this.btnConsultas.Click += new System.EventHandler(this.BtnConsultas_Click);
+            // 
+            // btnBatallas
+            // 
+            this.btnBatallas.Location = new System.Drawing.Point(335, 22);
+            this.btnBatallas.Name = "btnBatallas";
+            this.btnBatallas.Size = new System.Drawing.Size(120, 27);
+            this.btnBatallas.TabIndex = 2;
+            this.btnBatallas.Text = "Batallas";
+            this.btnBatallas.UseVisualStyleBackColor = true;
+            this.btnBatallas.Click += new System.EventHandler(this.BtnBatallas_Click);
+            // 
+            // btnEquipos
+            // 
+            this.btnEquipos.Location = new System.Drawing.Point(195, 22);
+            this.btnEquipos.Name = "btnEquipos";
+            this.btnEquipos.Size = new System.Drawing.Size(120, 27);
+            this.btnEquipos.TabIndex = 1;
+            this.btnEquipos.Text = "Equipos";
+            this.btnEquipos.UseVisualStyleBackColor = true;
+            this.btnEquipos.Click += new System.EventHandler(this.BtnEquipos_Click);
+            // 
+            // btnInventario
+            // 
+            this.btnInventario.Location = new System.Drawing.Point(15, 22);
+            this.btnInventario.Name = "btnInventario";
+            this.btnInventario.Size = new System.Drawing.Size(150, 27);
+            this.btnInventario.TabIndex = 0;
+            this.btnInventario.Text = "Inventario de criaturas";
+            this.btnInventario.UseVisualStyleBackColor = true;
+            this.btnInventario.Click += new System.EventHandler(this.BtnInventario_Click);
+            // 
             // txtLog
             // 
-            this.txtLog.Location = new System.Drawing.Point(10, 180);
+            this.txtLog.Location = new System.Drawing.Point(10, 250);
             this.txtLog.Multiline = true;
             this.txtLog.Name = "txtLog";
             this.txtLog.ReadOnly = true;
             this.txtLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtLog.Size = new System.Drawing.Size(770, 290);
-            this.txtLog.TabIndex = 11;
+            this.txtLog.Size = new System.Drawing.Size(770, 220);
+            this.txtLog.TabIndex = 13;
             // 
             // FrmClienteTcp
             // 
@@ -205,6 +265,7 @@ namespace Miticax.Cliente
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 480);
             this.Controls.Add(this.txtLog);
+            this.Controls.Add(this.grpModulos);
             this.Controls.Add(this.grpLogin);
             this.Controls.Add(this.btnPing);
             this.Controls.Add(this.btnEnviar);
@@ -220,6 +281,7 @@ namespace Miticax.Cliente
             this.Text = "Cliente TCP - MiticaX";
             this.grpLogin.ResumeLayout(false);
             this.grpLogin.PerformLayout();
+            this.grpModulos.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
         }
@@ -236,14 +298,21 @@ namespace Miticax.Cliente
         private System.Windows.Forms.Button btnEnviar;
         private System.Windows.Forms.Button btnPing;
 
-        // Controles de Login
+        // Login
         private System.Windows.Forms.GroupBox grpLogin;
-        private System.Windows.Forms.Label lblUsuario;
-        private System.Windows.Forms.TextBox txtUsuario;
-        private System.Windows.Forms.Label lblClave;
-        private System.Windows.Forms.TextBox txtClave;
-        private System.Windows.Forms.Button btnLogin;
         private System.Windows.Forms.Label lblLoginEstado;
+        private System.Windows.Forms.Button btnLogin;
+        private System.Windows.Forms.TextBox txtClave;
+        private System.Windows.Forms.Label lblClave;
+        private System.Windows.Forms.TextBox txtUsuario;
+        private System.Windows.Forms.Label lblUsuario;
+
+        // Modulos
+        private System.Windows.Forms.GroupBox grpModulos;
+        private System.Windows.Forms.Button btnInventario;
+        private System.Windows.Forms.Button btnEquipos;
+        private System.Windows.Forms.Button btnBatallas;
+        private System.Windows.Forms.Button btnConsultas;
 
         private System.Windows.Forms.TextBox txtLog;
     }

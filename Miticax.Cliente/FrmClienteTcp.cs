@@ -150,6 +150,34 @@ namespace Miticax.Cliente
             }
         }
 
+        private void BtnInventario_Click(object? sender, EventArgs e)
+        {
+            if (!sesionAutenticada) { MessageBox.Show("Debe iniciar sesion.", "Miticax", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            var f = new FrmInventario(cliente);
+            f.Show(this);
+        }
+
+        private void BtnEquipos_Click(object? sender, EventArgs e)
+        {
+            if (!sesionAutenticada) { MessageBox.Show("Debe iniciar sesion.", "Miticax", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            var f = new FrmEquipos(cliente);
+            f.Show(this);
+        }
+
+        private void BtnBatallas_Click(object? sender, EventArgs e)
+        {
+            if (!sesionAutenticada) { MessageBox.Show("Debe iniciar sesion.", "Miticax", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            var f = new FrmBatallas(cliente);
+            f.Show(this);
+        }
+
+        private void BtnConsultas_Click(object? sender, EventArgs e)
+        {
+            if (!sesionAutenticada) { MessageBox.Show("Debe iniciar sesion.", "Miticax", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            var f = new FrmConsultas(cliente);
+            f.Show(this);
+        }
+
         // Evento de estado: escribe en bitacora.
         private void Cliente_EventoEstado(string msg)
         {
@@ -172,8 +200,7 @@ namespace Miticax.Cliente
 
             txtLog.AppendText("<< " + linea + Environment.NewLine);
 
-            // Parseo simple por '|' sin LINQ ni colecciones genericas.
-            // Ej: LOGIN_OK|usuario|nombre|rol
+           
             if (linea.StartsWith("LOGIN_OK", StringComparison.OrdinalIgnoreCase))
             {
                 string[] partes = linea.Split('|'); // arrays permitidos
@@ -207,7 +234,7 @@ namespace Miticax.Cliente
                 return;
             }
 
-            // Aqui puedes enrutar otros comandos-respuestas (PONG, etc.).
+            
         }
 
         // Actualiza estado visual de login (habilita/deshabilita controles y texto).
@@ -226,8 +253,10 @@ namespace Miticax.Cliente
             txtClave.Enabled = !ok;
             btnLogin.Enabled = !ok;
 
-            // Segun tu flujo, tambien puedes habilitar modulos de Inventario/Equipos/Batallas aqui.
-            // Por ahora, solo visual.
+            // habilitar/deshabilitar modulos segun login
+            grpModulos.Enabled = ok;
+
+          
         }
     }
 }

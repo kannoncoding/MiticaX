@@ -127,7 +127,7 @@ namespace Miticax.Datos
 
         // ========================= Batallas =========================
 
-        // Crea una batalla segun POCO BatallaEntidad (usa tus campos: IdEquipo1/2).
+        // Crea una batalla segun POCO BatallaEntidad 
         public int AltaBatalla(int idJugador1, int idEquipo1, int idJugador2, int idEquipo2, DateTime fecha)
         {
             if (cantBatallas >= batallas.Length) return -1;
