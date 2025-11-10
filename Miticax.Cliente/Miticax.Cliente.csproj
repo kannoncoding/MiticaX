@@ -8,4 +8,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Miticax.Datos\Miticax.Datos.csproj" />
+    <ProjectReference Include="..\Miticax.Entidades\Miticax.Entidades.csproj" />
+    <ProjectReference Include="..\Miticax.Logica\Miticax.Logica.csproj" />
+  </ItemGroup>
+
 </Project>

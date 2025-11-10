@@ -1,17 +1,27 @@
+//UNED
+//Mitica X
+//Jorge Arias Melendez
+//Septiembre 2025
+//Punto de entrada del Cliente TCP de MiticaX
+
+using System;
+using System.Windows.Forms;
+
 namespace Miticax.Cliente
 {
     internal static class Program
     {
         /// <summary>
-        ///  The main entry point for the application.
+        /// Metodo principal: inicia la aplicacion cliente y abre el formulario principal TCP.
         /// </summary>
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
+            // Inicializa el entorno de Windows Forms (.NET 8)
             ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+
+            // Inicia la aplicacion mostrando el formulario del cliente TCP
+            Application.Run(new FrmClienteTcp());
         }
     }
 }
