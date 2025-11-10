@@ -1,7 +1,7 @@
 ﻿//UNED
 //Mitica X
 //Jorge Arias Melendez
-//Septiembre 2025
+//Tercer cuatrimestre 2025
 //Acceso a datos: Rondas de batalla con validaciones y efectos (cristales/poder) en SQL Server
 
 using System;

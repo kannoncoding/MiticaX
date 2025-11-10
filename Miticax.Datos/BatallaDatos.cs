@@ -1,7 +1,7 @@
 ﻿//UNED
 //Mitica X
 //Jorge Arias Melendez
-//Septiembre 2025
+//Tercer cuatrimestre 2025
 //Acceso a datos: CRUD de Batalla en SQL Server con validaciones y cierre de batalla
 
 using System;

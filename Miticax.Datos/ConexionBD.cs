@@ -13,24 +13,40 @@ namespace Miticax.Datos
     // Clase de acceso a datos: abre conexiones y ejecuta comandos SQL.
     public class ConexionBD
     {
-        // Cadena de conexion: ajusta el servidor/instancia y seguridad.
-        // Para desarrollo local con SQLEXPRESS:
-        private const string cadena = "Server=.\\SQLEXPRESS;Database=MiticaxDB;Trusted_Connection=True;TrustServerCertificate=True;";
-        // Si usas otra instancia/usuario, modifica la cadena.
+        // Cadena de conexion por defecto: SQLEXPRESS local con seguridad integrada.
+        private const string CadenaPorDefecto = "Server=.\\SQLEXPRESS;Database=MiticaxDB;Trusted_Connection=True;TrustServerCertificate=True;";
+
+        // Permite sobreescribir la cadena mediante variable de entorno (evita recompilar para cambiarla).
+        private static readonly string cadena;
+
+        static ConexionBD()
+        {
+            string? desdeEntorno = Environment.GetEnvironmentVariable("MITICAX_SQL_CONNECTION");
+            cadena = string.IsNullOrWhiteSpace(desdeEntorno) ? CadenaPorDefecto : desdeEntorno;
+        }
 
         // Metodo que retorna una conexion abierta lista para usar.
         public SqlConnection AbrirConexion()
         {
             // Crea la conexion con la cadena indicada.
             SqlConnection cn = new SqlConnection(cadena);
-            // Intenta abrir la conexion.
-            cn.Open();
-            // Retorna la conexion abierta al llamador.
-            return cn;
+            try
+            {
+                // Intenta abrir la conexion.
+                cn.Open();
+                // Retorna la conexion abierta al llamador.
+                return cn;
+            }
+            catch
+            {
+                // Asegura liberar recursos si la apertura falla.
+                cn.Dispose();
+                throw;
+            }
         }
 
         // Ejecuta un comando INSERT/UPDATE/DELETE y retorna filas afectadas.
-        public int EjecutarNoQuery(string sql, Action<SqlParameterCollection> parametros = null)
+        public int EjecutarNoQuery(string sql, Action<SqlParameterCollection>? parametros = null)
         {
             // Usa using para garantizar Dispose de conexion y comando.
             using (SqlConnection cn = AbrirConexion())
@@ -45,7 +61,7 @@ namespace Miticax.Datos
         }
 
         // Ejecuta un SELECT y retorna un SqlDataReader abierto (el llamador debe leer y cerrar).
-        public SqlDataReader EjecutarReader(string sql, Action<SqlParameterCollection> parametros = null)
+        public SqlDataReader EjecutarReader(string sql, Action<SqlParameterCollection>? parametros = null)
         {
             SqlConnection cn = AbrirConexion(); // se cierra cuando cerremos el reader
             SqlCommand cmd = new SqlCommand(sql, cn);
@@ -55,7 +71,7 @@ namespace Miticax.Datos
         }
 
         // Ejecuta un escalar (por ejemplo COUNT(*) o SCOPE_IDENTITY()).
-        public object EjecutarEscalar(string sql, Action<SqlParameterCollection> parametros = null)
+        public object EjecutarEscalar(string sql, Action<SqlParameterCollection>? parametros = null)
         {
             using (SqlConnection cn = AbrirConexion())
             using (SqlCommand cmd = new SqlCommand(sql, cn))
