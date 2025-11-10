@@ -2,7 +2,7 @@
 //Mitica X
 //Jorge Arias Melendez
 //Tercer cuatrimestre 2025
-//Logica del servidor TCP: listener, aceptacion, hilos por cliente y protocolo de texto.
+//Logica del servidor TCP: listener, aceptacion, hilos por cliente, protocolo base y comandos de juego.
 
 using System;
 using System.IO;
@@ -35,13 +35,21 @@ namespace Miticax.Logica
         // Hilo principal de aceptacion.
         private Thread? hiloAceptador;
 
-        // Capa de datos para manejar arreglos/slots.
+        // Capa de datos para manejar arreglos/slots (conexiones TCP).
         private readonly ServidorTcpDatos datos;
+
+        // ====== NUEVO: motor de juego (solo arreglos) ======
+        private readonly JuegoDatos juegoDatos;   // almacenamiento de jugadores, criaturas y batallas (arreglos)
+        private readonly JuegoLogica juegoLogica; // reglas y parseo de comandos de juego
 
         // Constructor: recibe instancia de datos (o crea una).
         public ServidorTcpLogica(ServidorTcpDatos? datosOpcional = null)
         {
-            datos = datosOpcional ?? new ServidorTcpDatos();
+            datos = datosOpcional ?? new ServidorTcpDatos(); // arreglos de conexiones
+
+            // Inicializa el motor de juego (arreglos + reglas).
+            juegoDatos = new JuegoDatos();
+            juegoLogica = new JuegoLogica(juegoDatos);
         }
 
         // Inicia el servidor en el puerto indicado.
@@ -93,6 +101,7 @@ namespace Miticax.Logica
                 {
                     // Bloquea hasta que llegue un cliente o lance excepcion al detener.
                     var cliente = listener!.AcceptTcpClient();
+                    cliente.NoDelay = true; // opcional: baja latencia para PING/ECHO
 
                     // Intenta reservar un slot en los arreglos.
                     int idx = datos.ReservarSlot();
@@ -219,21 +228,23 @@ namespace Miticax.Logica
             // Normaliza a mayusculas para comparar comandos.
             string n = nombre.ToUpperInvariant();
 
-            // Comando: PING -> PONG
-            if (n == "PING") return "PONG";
-
-            // Comando: ECHO|<texto> -> <texto>
-            if (n == "ECHO") return param;
-
-            // Comando: HELLO|<nombre> -> OK|Bienvenido <nombre>
-            if (n == "HELLO")
+            // ===== Comandos basicos del servidor =====
+            if (n == "PING") return "PONG";                                              // PING -> PONG
+            if (n == "ECHO") return param;                                               // ECHO|<texto> -> <texto>
+            if (n == "HELLO") // HELLO|<nombre> -> OK|Bienvenido <nombre>
             {
                 var texto = string.IsNullOrWhiteSpace(param) ? "Invitado" : param.Trim();
                 return "OK|Bienvenido " + texto;
             }
+            if (n == "BYE") return "__CERRAR__";                                        // BYE -> cerrar sesion
 
-            // Comando: BYE -> cerrar
-            if (n == "BYE") return "__CERRAR__";
+            // ===== Comandos de juego (Phase 3.1) =====
+            // Se enruta a JuegoLogica cuando el prefijo coincide.
+            if (n == "STATUS?" || n == "CRIATURAS?" || n == "CRIATURA?" || n == "JUGADOR" || n == "BATALLA")
+            {
+                // Delega el procesamiento completo a la capa de logica de juego.
+                return juegoLogica.ProcesarComandoJuego(cmd);
+            }
 
             // Comando no reconocido.
             return "ERROR|Comando no reconocido";
